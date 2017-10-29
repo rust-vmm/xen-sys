@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "oxerun",
+    "xen",
+    "xen-sys",
+]

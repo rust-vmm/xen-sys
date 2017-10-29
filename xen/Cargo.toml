@@ -1,0 +1,7 @@
+[package]
+authors = ["Doug Goldstein <cardoe@cardoe.com>"]
+name = "xen"
+version = "0.0.0-pre"
+
+[dependencies]
+xen-sys = { path = "../xen-sys" }

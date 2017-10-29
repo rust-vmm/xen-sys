@@ -1,0 +1,12 @@
+[package]
+authors = ["Doug Goldstein <cardoe@cardoe.com>"]
+name = "oxerun"
+version = "0.0.0-pre"
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+rlibc = "1"
+xen = { path = "../xen" }
+xen-sys = { path = "../xen-sys" }

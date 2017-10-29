@@ -1,0 +1,4 @@
+[package]
+authors = ["Doug Goldstein <cardoe@cardoe.com>"]
+name = "xen-sys"
+version = "0.0.0-pre"
