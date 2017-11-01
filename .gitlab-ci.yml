@@ -1,0 +1,17 @@
+stages:
+    - build
+
+build:
+    stage: build
+    image: rust:latest
+    before_script:
+        - rustup default nightly
+        - rustup component add rust-src
+        - cargo install xargo
+    script:
+        - rustc --version && cargo --version && xargo --version
+        - make
+    artifacts:
+        expire_in: 1 week
+        paths:
+            - build/oxerun-*.bin
