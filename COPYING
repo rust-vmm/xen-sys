@@ -1,0 +1,26 @@
+# Short Version
+
+The oXeRun Project is dual-licensed under Apache 2.0 and MIT.
+
+It does contain code from third party projects that are licensed
+under similar terms as well.
+
+# Long Version
+
+The oXeRun Project is:
+    Copyright (c) 2016-2017, Doug Goldstein <cardoe@cardoe.com>
+
+    Licensed under the Apache License, Version 2.0
+    <LICENSE-APACHE or http://www.apache.org/licenses/LICENSE-2.0>
+    or the MIT license <LICENSE-MIT or
+    http://opensource.org/licenses/MIT>, at your option. All
+    files in the project carrying such notice may not be copied,
+    modified, or distributed except according to those terms.
+
+The oXeRun Project includes sources from third parties. The following
+third party packages are included, and carry their own copyright notices
+and license terms:
+
+* Xen - oxerun/include/xen/ contains files directly from Xen 4.9.0
+* XTF - oxerun/src/x86_64/head.S and oxerun/include/oxerun/macros.h
+        are inspired by reading similar code from XTF
