@@ -1,5 +1,8 @@
 [package]
 authors = ["Doug Goldstein <cardoe@cardoe.com>"]
+description = "Compiler bits to create Rust unikernels for Xen"
+repository = "https://github.com/cardoe/oxerun.git"
+license = "MIT/Apache-2.0"
 name = "oxerun"
 version = "0.0.0-pre"
 
@@ -8,5 +11,5 @@ crate-type = ["staticlib"]
 
 [dependencies]
 rlibc = "1"
-xen = { path = "../xen" }
-xen-sys = { path = "../xen-sys" }
+xen = { path = "../xen", version = "0.0.0-pre" }
+xen-sys = { path = "../xen-sys", version = "0.0.0-pre" }
