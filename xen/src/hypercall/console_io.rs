@@ -16,6 +16,9 @@ pub enum ConsoleIO {
     Write = 0,
 }
 
+/// writes to the system serial console which
+/// is disabled for non-dom0 domains unless
+/// Xen is built with CONFIG_VERBOSE
 pub fn write(out: &[u8]) {
     unsafe {
         hypercall!(Hypercall::console_io,

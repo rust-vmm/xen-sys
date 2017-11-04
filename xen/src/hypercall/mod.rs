@@ -9,5 +9,7 @@
  */
 
 // export hypercall interfaces
+
+/// System Serial Console
 pub mod console_io;
 pub mod sched_op;
