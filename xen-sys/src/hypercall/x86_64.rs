@@ -21,21 +21,22 @@ extern {
     static HYPERCALL_PAGE: [hypercall_entry; 128];
 }
 
-/*
+#[inline]
 pub unsafe fn hypercall_1(op: Hypercall,
                           a1: u64) -> c_long {
     let ret: c_long;
     let _ign1: u64;
+    let addr = HYPERCALL_PAGE.as_ptr().offset(op as isize);
 
     asm!("call *$0"
-         : "=a,0" (ret), "=D" (_ign1)
-         : "*m" (HYPERCALL_PAGE[op as usize]),
-           "1" (a1)
+         : "={rax}" (ret), "={rdi}" (_ign1)
+         : "r" (addr),
+           "{rdi}" (a1)
          : "memory"
          : "volatile");
     ret
 }
-*/
+
 #[inline]
 pub unsafe fn hypercall_2(op: Hypercall,
                           a1: u64,
@@ -74,7 +75,7 @@ pub unsafe fn hypercall_3(op: Hypercall,
     ret
 }
 
-/*
+#[inline]
 pub unsafe fn hypercall_4(op: Hypercall,
                           a1: u64,
                           a2: u64,
@@ -85,23 +86,58 @@ pub unsafe fn hypercall_4(op: Hypercall,
     let _ign2: u64;
     let _ign3: u64;
     let _ign4: u64;
+    let addr = HYPERCALL_PAGE.as_ptr().offset(op as isize);
 
     asm!("call *$0"
-         : "=a" (ret), "=D" (_ign1), "=S" (_ign2), "=d" (_ign3)
-           "=&r" (_ign4)
-         : "*m" (HYPERCALL_PAGE[op as usize]),
-           "1" (a1), "2" (a2), "3" (a3), "4" (a4)
+         : "={rax}" (ret), "={rdi}" (_ign1), "={rsi}" (_ign2), "={rdx}" (_ign3),
+           "={r10}" (_ign4)
+         : "r" (addr),
+           "{rdi}" (a1), "{rsi}" (a2), "{rdx}" (a3), "{r10}" (a4)
          : "memory"
          : "volatile");
     ret
 }
-*/
+
+#[inline]
+pub unsafe fn hypercall_5(op: Hypercall,
+                          a1: u64,
+                          a2: u64,
+                          a3: u64,
+                          a4: u64,
+                          a5: u64) -> c_long {
+    let ret: c_long;
+    let _ign1: u64;
+    let _ign2: u64;
+    let _ign3: u64;
+    let _ign4: u64;
+    let _ign5: u64;
+    let addr = HYPERCALL_PAGE.as_ptr().offset(op as isize);
+
+    asm!("call *$0"
+         : "={rax}" (ret), "={rdi}" (_ign1), "={rsi}" (_ign2), "={rdx}" (_ign3),
+           "={r10}" (_ign4), "={r9}" (_ign5)
+         : "r" (addr),
+           "{rdi}" (a1), "{rsi}" (a2), "{rdx}" (a3), "{r10}" (a4), "{r9}" (a5)
+         : "memory"
+         : "volatile");
+    ret
+}
+
 
 #[macro_export]
 macro_rules! hypercall {
-    ($op:expr, $arg0:expr, $arg1:expr)
-        => ( $crate::hypercall::hypercall_2($op, $arg0 as u64, $arg1 as u64) );
+    ($op:expr, $a1:expr)
+        => ( $crate::hypercall::hypercall_1($op, $a1 as u64) );
 
-    ($op:expr, $arg0:expr, $arg1:expr, $arg2:expr)
-        => ( $crate::hypercall::hypercall_3($op, $arg0 as u64, $arg1 as u64, $arg2 as u64) );
+    ($op:expr, $a1:expr, $a2:expr)
+        => ( $crate::hypercall::hypercall_2($op, $a1 as u64, $a2 as u64) );
+
+    ($op:expr, $a1:expr, $a2:expr, $a3:expr)
+        => ( $crate::hypercall::hypercall_3($op, $a1 as u64, $a2 as u64, $a3 as u64) );
+
+    ($op:expr, $a1:expr, $a2:expr, $a3:expr, $a4:expr)
+        => ( $crate::hypercall::hypercall_4($op, $a1 as u64, $a2 as u64, $a3 as u64, $a4 as u64) );
+
+    ($op:expr, $a1:expr, $a2:expr, $a3:expr, $a4:expr, $a5:expr)
+        => ( $crate::hypercall::hypercall_5($op, $a1 as u64, $a2 as u64, $a3 as u64, $a4 as u64, $a5 as u64) );
 }
