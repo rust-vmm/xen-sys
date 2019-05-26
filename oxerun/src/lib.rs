@@ -11,7 +11,6 @@
 #![feature(lang_items)]
 #![no_std]
 
-extern crate rlibc;
 extern crate xen;
 extern crate xen_sys;
 

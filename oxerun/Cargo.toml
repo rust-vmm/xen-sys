@@ -10,6 +10,5 @@ version = "0.0.0-pre"
 crate-type = ["staticlib"]
 
 [dependencies]
-rlibc = "1"
 xen = { path = "../xen", version = "0.0.0-pre" }
 xen-sys = { path = "../xen-sys", version = "0.0.0-pre" }

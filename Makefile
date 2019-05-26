@@ -37,7 +37,7 @@ $(KERNEL): $(CRATE_BUILD) $(LDS) $(OBJS)
 
 $(CRATE_BUILD): $(RUST_SRCS)
 	@echo "  [XARGO] $(ARCH)/$(@F)"
-	@xargo build $(CARGO_TARGET) --target $(TARGET)
+	@cargo xbuild $(CARGO_TARGET) --target $(TARGET)
 
 build/$(OPT_TARGET)/$(ARCH)/%.o: oxerun/src/$(ARCH)/%.S
 	@mkdir -p $(@D)

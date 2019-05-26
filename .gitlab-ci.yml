@@ -7,9 +7,9 @@ build:
     before_script:
         - rustup default nightly
         - rustup component add rust-src
-        - cargo install xargo
+        - cargo install cargo-xbuild
     script:
-        - rustc --version && cargo --version && xargo --version
+        - rustc --version && cargo --version && cargo xbuild --version
         - make
         - make DEBUG=n
     artifacts:
