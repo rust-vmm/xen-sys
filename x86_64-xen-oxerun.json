@@ -17,10 +17,12 @@
   "os": "oxerun",
   "panic-strategy": "abort",
   "position-independent-executables": false,
-  "pre-link-args": [
-    "-Toxerun.ld",
-    "-nostdlib"
-  ],
+  "pre-link-args": {
+    "gcc": [
+      "-Toxerun.ld",
+      "-nostdlib"
+    ]
+  },
   "relro-level": "full",
   "stack-probes": false,
   "target-c-int-width": "32",
