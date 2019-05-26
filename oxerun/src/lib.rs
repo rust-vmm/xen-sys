@@ -15,6 +15,7 @@ extern crate rlibc;
 extern crate xen;
 extern crate xen_sys;
 
+use core::panic::PanicInfo;
 use core::ptr;
 use xen::hypercall;
 
@@ -36,12 +37,7 @@ pub extern "C" fn poweroff() -> ! {
 #[lang = "eh_personality"]
 extern "C" fn eh_personality() {}
 
-#[lang = "panic_fmt"]
-#[no_mangle]
-pub extern "C" fn rust_begin_panic(_fmt: core::fmt::Arguments,
-                                   _file: &'static str,
-                                   _line: u32,
-                                   _column: u32)
-                                   -> ! {
+#[panic_handler]
+fn panic(_info: &PanicInfo) -> ! {
     loop {}
 }
