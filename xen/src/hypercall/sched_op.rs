@@ -8,12 +8,30 @@
  * except according to those terms.
  */
 
+use core::panic::PanicInfo;
 use xen_sys::hypercall::{SchedOp, sched_op};
+use xen_sys::{SHUTDOWN_poweroff, SHUTDOWN_reboot, SHUTDOWN_crash};
 
-pub fn shutdown(reason: u32) {
+fn op_shutdown(reason: u32) {
     unsafe {
         sched_op(SchedOp::shutdown, reason)
     };
+}
+
+#[no_mangle]
+pub extern "C" fn poweroff() -> ! {
+    op_shutdown(SHUTDOWN_poweroff);
+    loop {}
+}
+
+pub fn reboot() {
+    op_shutdown(SHUTDOWN_reboot);
+}
+
+#[panic_handler]
+fn panic(_info: &PanicInfo) -> ! {
+    op_shutdown(SHUTDOWN_crash);
+    loop {}
 }
 
 pub fn yield_slice() {

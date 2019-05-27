@@ -14,7 +14,6 @@
 extern crate xen;
 extern crate xen_sys;
 
-use core::panic::PanicInfo;
 use core::ptr;
 use xen::hypercall;
 
@@ -27,16 +26,5 @@ pub extern "C" fn rust_entry(start_info_page: *mut xen_sys::start_info_t) {
     hypercall::console_io::write(test);
 }
 
-#[no_mangle]
-pub extern "C" fn poweroff() -> ! {
-    hypercall::sched_op::shutdown(0);
-    loop {}
-}
-
 #[lang = "eh_personality"]
 extern "C" fn eh_personality() {}
-
-#[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
-    loop {}
-}
