@@ -6,6 +6,7 @@ homepage = "https://gitlab.com/cardoe/oxerun"
 repository = "https://gitlab.com/cardoe/oxerun.git"
 license = "MIT/Apache-2.0"
 name = "xen"
+readme = "README.md"
 version = "0.0.0-pre"
 
 [dependencies.xen-sys]
