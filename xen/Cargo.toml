@@ -1,6 +1,6 @@
 [package]
 authors = ["Doug Goldstein <cardoe@cardoe.com>"]
-description = "Idomatic Rust interfaces to Xen APIs"
+description = "Idomatic Rust interfaces to Xen hypercall APIs"
 categories = ["external-ffi-bindings"]
 homepage = "https://gitlab.com/cardoe/oxerun"
 repository = "https://gitlab.com/cardoe/oxerun.git"

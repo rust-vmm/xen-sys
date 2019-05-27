@@ -1,6 +1,6 @@
 [package]
 authors = ["Doug Goldstein <cardoe@cardoe.com>"]
-description = "FFI bindings to Xen public headers"
+description = "Kernel level hypercall support for Xen"
 categories = ["external-ffi-bindings"]
 homepage = "https://gitlab.com/cardoe/oxerun"
 repository = "https://gitlab.com/cardoe/oxerun.git"
