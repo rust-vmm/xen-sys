@@ -6,7 +6,7 @@ repository = "https://gitlab.com/cardoe/oxerun.git"
 license = "MIT/Apache-2.0"
 name = "oxerun"
 readme = "README.md"
-version = "0.0.0-pre"
+version = "0.0.0-pre1"
 
 [badges]
 gitlab = { repository = "cardoe/sakl" }

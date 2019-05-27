@@ -7,8 +7,8 @@ repository = "https://gitlab.com/cardoe/oxerun.git"
 license = "MIT/Apache-2.0"
 name = "xen"
 readme = "README.md"
-version = "0.0.0-pre"
+version = "0.0.0-pre1"
 
 [dependencies.xen-sys]
 path = "../xen-sys"
-version = "=0.0.0-pre"
+version = "=0.0.0-pre1"
