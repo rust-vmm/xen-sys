@@ -28,7 +28,8 @@ AFLAGS := $(COMMON_FLAGS) -D__ASSEMBLY__
 all: $(KERNEL)
 
 clean:
-	@xargo clean
+	@cargo clean
+	@rm -rf target/sysroot
 	@rm -rf build
 
 $(KERNEL): $(CRATE_BUILD) $(LDS) $(OBJS)
