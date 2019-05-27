@@ -11,13 +11,13 @@ CARGO_TARGET := --release
 endif
 
 ARCH := x86_64
-TARGET := $(ARCH)-xen-oxerun
+TARGET := $(ARCH)-xen-pv
 CRATE := oxerun
 CRATE_OBJ := $(subst -,_,$(CRATE))
 CRATE_BUILD := target/$(TARGET)/$(OPT_TARGET)/lib$(CRATE_OBJ).a
 KERNEL := build/$(OPT_TARGET)/$(CRATE)-$(ARCH).bin
 
-LDS := oxerun.ld
+LDS := $(TARGET).ld
 RUST_SRCS := $(wildcard **/src/**.rs)
 SRCS := $(wildcard oxerun/src/$(ARCH)/*.S)
 OBJS := $(patsubst oxerun/src/$(ARCH)/%.S, build/$(OPT_TARGET)/$(ARCH)/%.o, $(SRCS))

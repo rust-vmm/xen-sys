@@ -14,12 +14,12 @@
   "linker-is-gnu": true,
   "llvm-target": "x86_64-unknown-none",
   "max-atomic-width": 64,
-  "os": "oxerun",
+  "os": "pv",
   "panic-strategy": "abort",
   "position-independent-executables": false,
   "pre-link-args": {
     "gcc": [
-      "-Toxerun.ld",
+      "-Tx86_64-xen-pv.ld",
       "-nostdlib"
     ]
   },
