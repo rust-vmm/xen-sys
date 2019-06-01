@@ -8,20 +8,24 @@
  * except according to those terms.
  */
 
-#![feature(lang_items)]
+#![feature(asm,
+           lang_items,
+           global_asm,
+           naked_functions)]
 #![no_std]
+#![no_main]
 
 extern crate xen;
 extern crate xen_sys;
 
-use core::ptr;
+use xen::entry_point;
 use xen::hypercall;
 
-#[no_mangle]
-pub extern "C" fn rust_entry(start_info_page: *mut xen_sys::start_info_t) {
-    let start_info = unsafe { ptr::read(start_info_page) };
+entry_point!(hello_world);
 
+pub fn hello_world() -> Result<(), ()> {
     let test = b"test";
 
     hypercall::console_io::write(test);
+    Ok(())
 }

@@ -12,9 +12,6 @@ edition = "2018"
 [badges]
 gitlab = { repository = "cardoe/oxerun" }
 
-[lib]
-crate-type = ["staticlib"]
-
 [dependencies]
 xen = { path = "../xen", version = "0.0.0-pre" }
 xen-sys = { path = "../xen-sys", version = "0.0.0-pre" }

@@ -14,5 +14,5 @@ build:
     artifacts:
         expire_in: 1 week
         paths:
-            - build/debug/oxerun-*.bin
-            - build/release/oxerun-*.bin
+            - target/x86_64-xen-pv/debug/oxerun
+            - target/x86_64-xen-pv/release/oxerun

@@ -8,7 +8,6 @@
  * except according to those terms.
  */
 
-use core::panic::PanicInfo;
 use xen_sys::hypercall::{SchedOp, sched_op};
 use xen_sys::{SHUTDOWN_poweroff, SHUTDOWN_reboot, SHUTDOWN_crash};
 
@@ -28,10 +27,8 @@ pub fn reboot() {
     op_shutdown(SHUTDOWN_reboot);
 }
 
-#[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
+pub fn crash() {
     op_shutdown(SHUTDOWN_crash);
-    loop {}
 }
 
 pub fn yield_slice() {
