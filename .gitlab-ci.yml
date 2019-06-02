@@ -5,7 +5,6 @@ build:
     stage: build
     image: rust:latest
     before_script:
-        - rustup default nightly
         - rustup component add rust-src
         - cargo install cargo-xbuild
     script:
