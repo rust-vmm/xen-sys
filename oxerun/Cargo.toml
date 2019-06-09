@@ -7,6 +7,7 @@ license = "MIT/Apache-2.0"
 name = "oxerun"
 readme = "README.md"
 version = "0.0.0-pre1"
+edition = "2018"
 
 [badges]
 gitlab = { repository = "cardoe/sakl" }
