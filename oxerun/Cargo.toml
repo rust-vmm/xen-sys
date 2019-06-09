@@ -10,7 +10,7 @@ version = "0.0.0-pre1"
 edition = "2018"
 
 [badges]
-gitlab = { repository = "cardoe/sakl" }
+gitlab = { repository = "cardoe/oxerun" }
 
 [lib]
 crate-type = ["staticlib"]
