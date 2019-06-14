@@ -10,7 +10,8 @@
   "has-elf-tls": false,
   "has-rpath": false,
   "is-builtin": false,
-  "linker-flavor": "gcc",
+  "linker": "rust-lld",
+  "linker-flavor": "ld.lld",
   "linker-is-gnu": true,
   "llvm-target": "x86_64-unknown-none",
   "max-atomic-width": 64,
@@ -18,9 +19,8 @@
   "panic-strategy": "abort",
   "position-independent-executables": false,
   "pre-link-args": {
-    "gcc": [
-      "-Tx86_64-xen-pv.ld",
-      "-nostdlib"
+    "ld.lld": [
+      "--script=x86_64-xen-pv.ld"
     ]
   },
   "relro-level": "full",
