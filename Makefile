@@ -25,6 +25,9 @@ OBJS := $(patsubst oxerun/src/$(ARCH)/%.S, build/$(OPT_TARGET)/$(ARCH)/%.o, $(SR
 COMMON_FLAGS := -pipe -nostdinc -Ioxerun/include
 AFLAGS := $(COMMON_FLAGS) -D__ASSEMBLY__
 
+XEN_PATH ?= ../xen
+XEN_INCLUDE = $(XEN_PATH)/xen/include
+
 all: $(KERNEL)
 
 clean:
@@ -44,3 +47,13 @@ build/$(OPT_TARGET)/$(ARCH)/%.o: oxerun/src/$(ARCH)/%.S
 	@mkdir -p $(@D)
 	@echo "  [CC] $(ARCH)/$(@F)"
 	@$(CC) -g -c -o $@ $(AFLAGS) $<
+
+xen-sys/src/$(ARCH)/bindgen.rs: $(XEN_INCLUDE)/public/xen.h xen-sys/wrapper.h
+	@mkdir -p $(@D)
+	@bindgen \
+		--rust-target nightly \
+		--use-core \
+		--ctypes-prefix cty \
+		-o $@ \
+		xen-sys/wrapper.h \
+		-- -I$(XEN_INCLUDE)
