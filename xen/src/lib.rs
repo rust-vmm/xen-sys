@@ -10,7 +10,6 @@
 
 #![no_std]
 
-#[macro_use]
 extern crate xen_sys;
 
 // export functionality

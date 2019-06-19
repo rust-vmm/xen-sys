@@ -8,20 +8,16 @@
  * except according to those terms.
  */
 
-use xen_sys::hypercall::Hypercall;
-
-const SCHEDOP_yield: u64 = 0;
-const SCHEDOP_shutdown: u64 = 2;
-const SCHEDOP_poll: u64 = 3;
+use xen_sys::hypercall::{SchedOp, sched_op};
 
 pub fn shutdown(reason: u32) {
     unsafe {
-        hypercall!(Hypercall::sched_op, SCHEDOP_shutdown, 0)
+        sched_op(SchedOp::shutdown, reason)
     };
 }
 
 pub fn yield_slice() {
     unsafe {
-        hypercall!(Hypercall::sched_op, SCHEDOP_yield, 0);
+        sched_op(SchedOp::r#yield, 0);
     };
 }

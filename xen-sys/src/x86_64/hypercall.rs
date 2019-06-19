@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 Doug Goldstein <cardoe@cardoe.com>
+ * Copyright 2016-2019 Doug Goldstein <cardoe@cardoe.com>
  *
  * Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
  * http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
@@ -8,8 +8,7 @@
  * except according to those terms.
  */
 
-use super::super::*;
-use super::Hypercall;
+use cty::c_long;
 
 /// x86_64 hypercalls are called at the address: 32 * HYPERCALL_NUM
 #[repr(C)]
@@ -22,7 +21,7 @@ extern {
 }
 
 #[inline]
-pub unsafe fn hypercall_1(op: Hypercall,
+pub unsafe fn hypercall_1(op: u32,
                           a1: u64) -> c_long {
     let ret: c_long;
     let _ign1: u64;
@@ -38,7 +37,7 @@ pub unsafe fn hypercall_1(op: Hypercall,
 }
 
 #[inline]
-pub unsafe fn hypercall_2(op: Hypercall,
+pub unsafe fn hypercall_2(op: u32,
                           a1: u64,
                           a2: u64) -> c_long {
     let ret: c_long;
@@ -56,7 +55,7 @@ pub unsafe fn hypercall_2(op: Hypercall,
 }
 
 #[inline]
-pub unsafe fn hypercall_3(op: Hypercall,
+pub unsafe fn hypercall_3(op: u32,
                           a1: u64,
                           a2: u64,
                           a3: u64) -> c_long {
@@ -76,7 +75,7 @@ pub unsafe fn hypercall_3(op: Hypercall,
 }
 
 #[inline]
-pub unsafe fn hypercall_4(op: Hypercall,
+pub unsafe fn hypercall_4(op: u32,
                           a1: u64,
                           a2: u64,
                           a3: u64,
@@ -99,7 +98,7 @@ pub unsafe fn hypercall_4(op: Hypercall,
 }
 
 #[inline]
-pub unsafe fn hypercall_5(op: Hypercall,
+pub unsafe fn hypercall_5(op: u32,
                           a1: u64,
                           a2: u64,
                           a3: u64,
@@ -121,23 +120,4 @@ pub unsafe fn hypercall_5(op: Hypercall,
          : "memory"
          : "volatile");
     ret
-}
-
-
-#[macro_export]
-macro_rules! hypercall {
-    ($op:expr, $a1:expr)
-        => ( $crate::hypercall::hypercall_1($op, $a1 as u64) );
-
-    ($op:expr, $a1:expr, $a2:expr)
-        => ( $crate::hypercall::hypercall_2($op, $a1 as u64, $a2 as u64) );
-
-    ($op:expr, $a1:expr, $a2:expr, $a3:expr)
-        => ( $crate::hypercall::hypercall_3($op, $a1 as u64, $a2 as u64, $a3 as u64) );
-
-    ($op:expr, $a1:expr, $a2:expr, $a3:expr, $a4:expr)
-        => ( $crate::hypercall::hypercall_4($op, $a1 as u64, $a2 as u64, $a3 as u64, $a4 as u64) );
-
-    ($op:expr, $a1:expr, $a2:expr, $a3:expr, $a4:expr, $a5:expr)
-        => ( $crate::hypercall::hypercall_5($op, $a1 as u64, $a2 as u64, $a3 as u64, $a4 as u64, $a5 as u64) );
 }
