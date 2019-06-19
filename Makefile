@@ -37,8 +37,8 @@ $(KERNEL): $(CRATE_BUILD) $(LDS) $(OBJS)
 	ld -n --gc-sections -T $(LDS) -o $(KERNEL) $(OBJS) $(CRATE_BUILD)
 
 $(CRATE_BUILD): $(RUST_SRCS)
-	@echo "  [CARGO] $(ARCH)/$(@F)"
-	@cargo xbuild $(CARGO_TARGET) --target $(TARGET)
+	@echo "  [CARGO] $(TARGET)/$(@F)"
+	@cargo xbuild $(CARGO_TARGET) --target ./$(TARGET).json
 
 build/$(OPT_TARGET)/$(ARCH)/%.o: oxerun/src/$(ARCH)/%.S
 	@mkdir -p $(@D)
