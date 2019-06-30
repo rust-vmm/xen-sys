@@ -25,6 +25,3 @@ pub extern "C" fn rust_entry(start_info_page: *mut xen_sys::start_info_t) {
 
     hypercall::console_io::write(test);
 }
-
-#[lang = "eh_personality"]
-extern "C" fn eh_personality() {}

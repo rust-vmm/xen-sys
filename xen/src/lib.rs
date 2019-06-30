@@ -14,3 +14,7 @@ extern crate xen_sys;
 
 // export functionality
 pub mod hypercall;
+
+#[cfg(target = "x86_64-xen-pv")]
+#[lang = "eh_personality"]
+extern "C" fn eh_personality() {}
