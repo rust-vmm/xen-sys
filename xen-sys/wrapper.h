@@ -8,3 +8,4 @@ typedef unsigned int uint32_t;
 typedef unsigned long long uint64_t;
 #include <public/xen.h>
 #include <public/sched.h>
+#include <public/elfnote.h>

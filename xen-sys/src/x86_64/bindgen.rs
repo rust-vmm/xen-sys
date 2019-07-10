@@ -227,6 +227,32 @@ pub const SHUTDOWN_crash: u32 = 3;
 pub const SHUTDOWN_watchdog: u32 = 4;
 pub const SHUTDOWN_soft_reset: u32 = 5;
 pub const SHUTDOWN_MAX: u32 = 5;
+pub const XEN_ELFNOTE_INFO: u32 = 0;
+pub const XEN_ELFNOTE_ENTRY: u32 = 1;
+pub const XEN_ELFNOTE_HYPERCALL_PAGE: u32 = 2;
+pub const XEN_ELFNOTE_VIRT_BASE: u32 = 3;
+pub const XEN_ELFNOTE_PADDR_OFFSET: u32 = 4;
+pub const XEN_ELFNOTE_XEN_VERSION: u32 = 5;
+pub const XEN_ELFNOTE_GUEST_OS: u32 = 6;
+pub const XEN_ELFNOTE_GUEST_VERSION: u32 = 7;
+pub const XEN_ELFNOTE_LOADER: u32 = 8;
+pub const XEN_ELFNOTE_PAE_MODE: u32 = 9;
+pub const XEN_ELFNOTE_FEATURES: u32 = 10;
+pub const XEN_ELFNOTE_BSD_SYMTAB: u32 = 11;
+pub const XEN_ELFNOTE_HV_START_LOW: u32 = 12;
+pub const XEN_ELFNOTE_L1_MFN_VALID: u32 = 13;
+pub const XEN_ELFNOTE_SUSPEND_CANCEL: u32 = 14;
+pub const XEN_ELFNOTE_INIT_P2M: u32 = 15;
+pub const XEN_ELFNOTE_MOD_START_PFN: u32 = 16;
+pub const XEN_ELFNOTE_SUPPORTED_FEATURES: u32 = 17;
+pub const XEN_ELFNOTE_PHYS32_ENTRY: u32 = 18;
+pub const XEN_ELFNOTE_MAX: u32 = 18;
+pub const XEN_ELFNOTE_CRASH_INFO: u32 = 16777217;
+pub const XEN_ELFNOTE_CRASH_REGS: u32 = 16777218;
+pub const XEN_ELFNOTE_DUMPCORE_NONE: u32 = 33554432;
+pub const XEN_ELFNOTE_DUMPCORE_HEADER: u32 = 33554433;
+pub const XEN_ELFNOTE_DUMPCORE_XEN_VERSION: u32 = 33554434;
+pub const XEN_ELFNOTE_DUMPCORE_FORMAT_VERSION: u32 = 33554435;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct iret_context {
