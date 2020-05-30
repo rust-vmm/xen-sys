@@ -16,13 +16,12 @@ use cty::c_long;
 struct hypercall_entry([u8; 32]);
 
 /// pages on x86_64 are 4096 bytes giving us 128 32-byte entries
-extern {
+extern "C" {
     static HYPERCALL_PAGE: [hypercall_entry; 128];
 }
 
 #[inline]
-pub unsafe fn hypercall_1(op: u32,
-                          a1: u64) -> c_long {
+pub unsafe fn hypercall_1(op: u32, a1: u64) -> c_long {
     let ret: c_long;
     let _ign1: u64;
     let addr = HYPERCALL_PAGE.as_ptr().offset(op as isize);
@@ -37,9 +36,7 @@ pub unsafe fn hypercall_1(op: u32,
 }
 
 #[inline]
-pub unsafe fn hypercall_2(op: u32,
-                          a1: u64,
-                          a2: u64) -> c_long {
+pub unsafe fn hypercall_2(op: u32, a1: u64, a2: u64) -> c_long {
     let ret: c_long;
     let _ign1: u64;
     let _ign2: u64;
@@ -55,10 +52,7 @@ pub unsafe fn hypercall_2(op: u32,
 }
 
 #[inline]
-pub unsafe fn hypercall_3(op: u32,
-                          a1: u64,
-                          a2: u64,
-                          a3: u64) -> c_long {
+pub unsafe fn hypercall_3(op: u32, a1: u64, a2: u64, a3: u64) -> c_long {
     let ret: c_long;
     let _ign1: u64;
     let _ign2: u64;
@@ -75,11 +69,7 @@ pub unsafe fn hypercall_3(op: u32,
 }
 
 #[inline]
-pub unsafe fn hypercall_4(op: u32,
-                          a1: u64,
-                          a2: u64,
-                          a3: u64,
-                          a4: u64) -> c_long {
+pub unsafe fn hypercall_4(op: u32, a1: u64, a2: u64, a3: u64, a4: u64) -> c_long {
     let ret: c_long;
     let _ign1: u64;
     let _ign2: u64;
@@ -98,12 +88,7 @@ pub unsafe fn hypercall_4(op: u32,
 }
 
 #[inline]
-pub unsafe fn hypercall_5(op: u32,
-                          a1: u64,
-                          a2: u64,
-                          a3: u64,
-                          a4: u64,
-                          a5: u64) -> c_long {
+pub unsafe fn hypercall_5(op: u32, a1: u64, a2: u64, a3: u64, a4: u64, a5: u64) -> c_long {
     let ret: c_long;
     let _ign1: u64;
     let _ign2: u64;

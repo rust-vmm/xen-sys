@@ -44,53 +44,50 @@ pub enum ConsoleIO {
 }
 
 macro_rules! hypercall {
-    ($op:expr, $a1:expr)
-        => {
-            $crate::hypercall_1($op, $a1 as u64)
-        };
+    ($op:expr, $a1:expr) => {
+        $crate::hypercall_1($op, $a1 as u64)
+    };
 
-    ($op:expr, $a1:expr, $a2:expr)
-        => {
-            $crate::hypercall_2($op, $a1 as u64, $a2 as u64)
-        };
+    ($op:expr, $a1:expr, $a2:expr) => {
+        $crate::hypercall_2($op, $a1 as u64, $a2 as u64)
+    };
 
-    ($op:expr, $a1:expr, $a2:expr, $a3:expr)
-        => {
-            $crate::hypercall_3($op, $a1 as u64, $a2 as u64, $a3 as u64)
-        };
+    ($op:expr, $a1:expr, $a2:expr, $a3:expr) => {
+        $crate::hypercall_3($op, $a1 as u64, $a2 as u64, $a3 as u64)
+    };
 
-    ($op:expr, $a1:expr, $a2:expr, $a3:expr, $a4:expr)
-        => {
-            $crate::hypercall_4($op, $a1 as u64, $a2 as u64, $a3 as u64, $a4 as u64)
-        };
+    ($op:expr, $a1:expr, $a2:expr, $a3:expr, $a4:expr) => {
+        $crate::hypercall_4($op, $a1 as u64, $a2 as u64, $a3 as u64, $a4 as u64)
+    };
 
-    ($op:expr, $a1:expr, $a2:expr, $a3:expr, $a4:expr, $a5:expr)
-        => {
-            $crate::hypercall_5($op, $a1 as u64, $a2 as u64, $a3 as u64, $a4 as u64, $a5 as u64)
-        };
+    ($op:expr, $a1:expr, $a2:expr, $a3:expr, $a4:expr, $a5:expr) => {
+        $crate::hypercall_5(
+            $op, $a1 as u64, $a2 as u64, $a3 as u64, $a4 as u64, $a5 as u64,
+        )
+    };
 }
 
 pub unsafe fn console_io(mode: ConsoleIO, buf: &[u8]) -> i64 {
     match mode {
-        ConsoleIO::Write => hypercall!(__HYPERVISOR_console_io,
-                                       CONSOLEIO_write,
-                                       buf.len() as u64,
-                                       buf.as_ptr() as u64),
-        ConsoleIO::Read => hypercall!(__HYPERVISOR_console_io,
-                                      CONSOLEIO_read,
-                                      buf.len() as u64,
-                                      buf.as_ptr() as u64)
+        ConsoleIO::Write => hypercall!(
+            __HYPERVISOR_console_io,
+            CONSOLEIO_write,
+            buf.len() as u64,
+            buf.as_ptr() as u64
+        ),
+        ConsoleIO::Read => hypercall!(
+            __HYPERVISOR_console_io,
+            CONSOLEIO_read,
+            buf.len() as u64,
+            buf.as_ptr() as u64
+        ),
     }
 }
 
 pub unsafe fn sched_op(mode: SchedOp, data: u32) {
     match mode {
-        SchedOp::r#yield => hypercall!(__HYPERVISOR_sched_op,
-                                       SCHEDOP_yield,
-                                       data as u64),
-        SchedOp::shutdown => hypercall!(__HYPERVISOR_sched_op,
-                                        SCHEDOP_shutdown,
-                                        data as u64),
+        SchedOp::r#yield => hypercall!(__HYPERVISOR_sched_op, SCHEDOP_yield, data as u64),
+        SchedOp::shutdown => hypercall!(__HYPERVISOR_sched_op, SCHEDOP_shutdown, data as u64),
         _ => panic!(),
     };
 }
