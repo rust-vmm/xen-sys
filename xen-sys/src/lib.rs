@@ -8,7 +8,7 @@
  * except according to those terms.
  */
 
-#![feature(asm)]
+#![feature(llvm_asm)]
 #![no_std]
 
 #[cfg(target_arch = "x86_64")]

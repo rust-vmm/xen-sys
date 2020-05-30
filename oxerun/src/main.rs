@@ -8,7 +8,7 @@
  * except according to those terms.
  */
 
-#![feature(asm,
+#![feature(llvm_asm,
            lang_items,
            global_asm,
            naked_functions)]

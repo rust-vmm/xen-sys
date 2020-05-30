@@ -59,7 +59,7 @@ macro_rules! entry_point {
         pub extern "C" fn __impl_start() -> ! {
             // move to our own stack
             unsafe {
-                asm!("mov $0, %rbp; \
+                llvm_asm!("mov $0, %rbp; \
                       mov %rbp, %rsp;"
                      : /* no output */
                      : "i" (&STACK_TOP as *const u64)

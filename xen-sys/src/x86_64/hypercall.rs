@@ -27,7 +27,7 @@ pub unsafe fn hypercall_1(op: u32,
     let _ign1: u64;
     let addr = HYPERCALL_PAGE.as_ptr().offset(op as isize);
 
-    asm!("call *$0"
+    llvm_asm!("call *$0"
          : "={rax}" (ret), "={rdi}" (_ign1)
          : "r" (addr),
            "{rdi}" (a1)
@@ -45,7 +45,7 @@ pub unsafe fn hypercall_2(op: u32,
     let _ign2: u64;
     let addr = HYPERCALL_PAGE.as_ptr().offset(op as isize);
 
-    asm!("call *$0"
+    llvm_asm!("call *$0"
          : "={rax}" (ret), "={rdi}" (_ign1), "={rsi}" (_ign2)
          : "r" (addr),
            "{rdi}" (a1), "{rsi}" (a2)
@@ -65,7 +65,7 @@ pub unsafe fn hypercall_3(op: u32,
     let _ign3: u64;
     let addr = HYPERCALL_PAGE.as_ptr().offset(op as isize);
 
-    asm!("call *$0"
+    llvm_asm!("call *$0"
          : "={rax}" (ret), "={rdi}" (_ign1), "={rsi}" (_ign2), "={rdx}" (_ign3)
          : "r" (addr),
            "{rdi}" (a1), "{rsi}" (a2), "{rdx}" (a3)
@@ -87,7 +87,7 @@ pub unsafe fn hypercall_4(op: u32,
     let _ign4: u64;
     let addr = HYPERCALL_PAGE.as_ptr().offset(op as isize);
 
-    asm!("call *$0"
+    llvm_asm!("call *$0"
          : "={rax}" (ret), "={rdi}" (_ign1), "={rsi}" (_ign2), "={rdx}" (_ign3),
            "={r10}" (_ign4)
          : "r" (addr),
@@ -112,7 +112,7 @@ pub unsafe fn hypercall_5(op: u32,
     let _ign5: u64;
     let addr = HYPERCALL_PAGE.as_ptr().offset(op as isize);
 
-    asm!("call *$0"
+    llvm_asm!("call *$0"
          : "={rax}" (ret), "={rdi}" (_ign1), "={rsi}" (_ign2), "={rdx}" (_ign3),
            "={r10}" (_ign4), "={r9}" (_ign5)
          : "r" (addr),
