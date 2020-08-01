@@ -6,9 +6,8 @@ build:
     image: rust:latest
     before_script:
         - rustup component add rust-src
-        - cargo install cargo-xbuild
     script:
-        - rustc --version && cargo --version && cargo xbuild --version
+        - rustc --version && cargo --version
         - make
         - make DEBUG=n
     artifacts:

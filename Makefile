@@ -29,7 +29,7 @@ clean:
 
 $(KERNEL): $(RUST_SRCS)
 	@echo "  [CARGO] $(TARGET)/$(@F)"
-	@cargo xbuild $(CARGO_TARGET) --target ./$(TARGET).json
+	@cargo build -Z build-std=core,alloc $(CARGO_TARGET) --target ./$(TARGET).json
 
 xen-sys/src/$(ARCH)/bindgen.rs: $(XEN_INCLUDE)/public/xen.h xen-sys/wrapper.h
 	@mkdir -p $(@D)
