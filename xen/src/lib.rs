@@ -55,16 +55,15 @@ macro_rules! entry_point {
         entry_point!(9, "asciz", "\"yes\"");
 
         #[export_name = "_start"]
-        #[naked]
         pub extern "C" fn __impl_start() -> ! {
             // move to our own stack
             unsafe {
-                llvm_asm!("mov $0, %rbp; \
-                      mov %rbp, %rsp;"
-                     : /* no output */
-                     : "i" (&STACK_TOP as *const u64)
-                     : /* no clobbers ever because we don't yet have a stack */
-                     : "volatile");
+                asm!(
+                    "mov rbp, {}",
+                    "mov rsp, rbp",
+                    in(reg) &STACK_TOP as *const u64,
+                    options(nostack, nomem)
+                );
             }
 
             // validate the signature of the program entry point
