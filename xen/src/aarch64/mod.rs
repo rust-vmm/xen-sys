@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 Doug Goldstein <cardoe@cardoe.com>
+ * Copyright 2021-2022 Mathieu Poirier <mathieu.poirier@linaro.org>
  *
  * Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
  * http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
@@ -8,16 +8,4 @@
  * except according to those terms.
  */
 
-#![no_std]
-
-#[cfg(target_arch = "x86_64")]
-mod x86_64;
-#[cfg(target_arch = "x86_64")]
-pub use self::x86_64::*;
-
-#[cfg(target_arch = "aarch64")]
-mod aarch64;
-#[cfg(target_arch = "aarch64")]
-pub use self::aarch64::*;
-
-pub mod hypercall;
+pub mod entry;
