@@ -13,6 +13,9 @@
 #[cfg(target_arch = "x86_64")]
 use crate::x86_64::*;
 
+#[cfg(target_arch = "aarch64")]
+use crate::aarch64::*;
+
 /// SCHEDOP_ defines from public/sched.h
 #[derive(Debug)]
 pub enum SchedOp {
@@ -84,10 +87,22 @@ pub unsafe fn console_io(mode: ConsoleIO, buf: &[u8]) -> i64 {
     }
 }
 
+#[cfg(target_arch = "x86_64")]
 pub unsafe fn sched_op(mode: SchedOp, data: u32) {
     match mode {
         SchedOp::r#yield => hypercall!(__HYPERVISOR_sched_op, SCHEDOP_yield, data as u64),
         SchedOp::shutdown => hypercall!(__HYPERVISOR_sched_op, SCHEDOP_shutdown, data as u64),
+        _ => panic!(),
+    };
+}
+
+#[cfg(target_arch = "aarch64")]
+pub unsafe fn sched_op(mode: SchedOp, data: u32) {
+    let address = &data as *const u32;
+
+    match mode {
+        SchedOp::r#yield => hypercall!(__HYPERVISOR_sched_op, SCHEDOP_yield, address as u64),
+        SchedOp::shutdown => hypercall!(__HYPERVISOR_sched_op, SCHEDOP_shutdown, address as u64),
         _ => panic!(),
     };
 }
