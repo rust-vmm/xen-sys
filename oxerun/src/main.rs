@@ -8,13 +8,15 @@
  * except according to those terms.
  */
 
-#![feature(asm, lang_items, global_asm, naked_functions)]
+#![feature(lang_items, naked_functions)]
 #![no_std]
 #![no_main]
 
 extern crate xen;
 extern crate xen_sys;
 
+use core::arch::asm;
+use core::arch::global_asm;
 use xen::entry_point;
 use xen::hypercall;
 
