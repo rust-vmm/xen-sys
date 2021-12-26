@@ -8,7 +8,7 @@
  * except according to those terms.
  */
 
-#![feature(lang_items, naked_functions)]
+#![feature(lang_items)]
 #![no_std]
 #![no_main]
 
