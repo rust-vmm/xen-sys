@@ -1,6 +1,10 @@
 [workspace]
 members = [
-    "oxerun",
-    "xen",
-    "xen-sys",
+    "crates/xen",
+    "crates/xen-sys",
 ]
+exclude = [
+    "examples/oxerun",
+    "examples/ioctls",
+]
+
