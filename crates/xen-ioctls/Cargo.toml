@@ -1,0 +1,10 @@
+[package]
+authors = ["Mathieu Poirier <mathieu.poirier@linaro.org"]
+description = "Xen syctcl ioctl call implementation"
+repository = "https://gitlab.com/cardoe/oxerun.git"
+license = "Apache-2.0 OR MIT"
+name = "xen-ioctls"
+readme = "README.md"
+version = "0.0.0-pre1"
+edition = "2018"
+
