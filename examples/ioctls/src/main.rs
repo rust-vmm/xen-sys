@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-22 Mathieu Poirier <mathieu.poirier@linaro.org>
+ * Copyright 2022-23 Mathieu Poirier <mathieu.poirier@linaro.org>
  *
  * Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
  * http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
@@ -8,9 +8,10 @@
  * except according to those terms.
  */
 
-pub mod sysctl;
+use xen_ioctls::sysctl::*;
 
-#[cfg(target_arch = "x86_64")]
-mod x86_64;
-#[cfg(target_arch = "aarch64")]
-mod aarch64;
+fn main() {
+
+    println!("size of XenSysctlPhysinfo: {}", std::mem::size_of::<XenSysctlPhysinfo>());
+    println!("size of XenSysctl: {}", std::mem::size_of::<XenSysctl>());
+}
