@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "crates/xen",
+    "crates/xen-ioctls",
     "crates/xen-sys",
 ]
 exclude = [
