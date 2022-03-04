@@ -10,6 +10,5 @@ readme = "README.md"
 version = "0.0.0-pre1"
 edition = "2018"
 
-[dependencies.xen-sys]
-path = "../xen-sys"
-version = "=0.0.0-pre1"
+[dependencies]
+xen-sys = { version = "0.0.0-pre1", path = "../xen-sys" }
