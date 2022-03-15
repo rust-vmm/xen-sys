@@ -8,6 +8,10 @@
  * except according to those terms.
  */
 
+pub mod privcmd;
+pub mod xc_misc;
+pub mod sysctl_types;
+
 pub mod sysctl;
 
 #[cfg(target_arch = "x86_64")]

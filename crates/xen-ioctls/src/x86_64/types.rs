@@ -9,7 +9,7 @@
  */
 
 #[repr(align(8))]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct U64Aligned {
     pub v: u64,
-} 
+}
