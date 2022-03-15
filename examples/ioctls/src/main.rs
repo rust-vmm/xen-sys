@@ -8,10 +8,18 @@
  * except according to those terms.
  */
 
-use xen_ioctls::sysctl::*;
+use xen_ioctls::sysctl_types::*;
+use xen_ioctls::privcmd::PrivCmdHypercall;
+use xen_ioctls::xc_misc::*;
 
 fn main() {
 
     println!("size of XenSysctlPhysinfo: {}", std::mem::size_of::<XenSysctlPhysinfo>());
+    println!("size of PrivCmdHypercall: {}", std::mem::size_of::<PrivCmdHypercall>());
     println!("size of XenSysctl: {}", std::mem::size_of::<XenSysctl>());
+
+    match get_physinfo() {
+        Ok(physinfo) => println!("physinfo: {:?}", physinfo),
+        Err(err) => println!("err: {}", err),
+    }
 }

@@ -8,81 +8,82 @@
  * except according to those terms.
  */
 
-#![allow(dead_code)]
-#![allow(non_upper_case_globals)]
+use std::io::Error;
+use std::fs::{OpenOptions};
+use std::os::unix::io::AsRawFd;
+use libc::{c_void, ioctl, mmap, munmap, MAP_SHARED, PROT_READ, PROT_WRITE};
 
-#[cfg(target_arch = "x86_64")]
-use crate::x86_64::types::*;
-#[cfg(target_arch = "aarch64")]
-use crate::aarch64::types::*;
+use crate::privcmd::*;
+use crate::sysctl_types::XenSysctl;
 
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct PrivCmdHypercall
+const HYPERCALL_PRIVCMD: &str = "/dev/xen/privcmd";
+const HYPERCALL_BUFFER_FILE: &str = "/dev/xen/hypercall";
+
+fn round_up(value: u64, scale: u64) -> u64
 {
-	pub op: u64,
-	pub arg: [u64; 5],
+    let mut ceiling: u64 = scale;
+
+    while ceiling < value {
+        ceiling += scale;
+    }
+
+    ceiling
 }
 
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct XenSysctlPhysinfo {
-    pub threads_per_core: u32,
-    pub cores_per_socket: u32,
-    pub nr_cpus: u32,
-    pub max_cpu_id: u32,
-    pub nr_nodes: u32,
-    pub max_node_id: u32,
-    pub cpu_khz: u32,
-    pub capabilites: u32,
-    pub total_pages: U64Aligned,
-    pub free_pages: U64Aligned,
-    pub scrub_pages: U64Aligned,
-    pub outstanding_pages: U64Aligned,
-    pub max_mfn: U64Aligned,
-    pub hw_cap: [u32; 8],
+unsafe fn do_ioctl(data: *mut PrivCmdHypercall) -> Result<(), std::io::Error>
+{
+    let fd = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(HYPERCALL_PRIVCMD)?;
+
+    let ret = ioctl(fd.as_raw_fd(), crate::privcmd::IOCTL_PRIVCMD_HYPERCALL, data);
+
+    if ret == 0 {
+        return Ok(());
+    }
+
+    Err(Error::last_os_error())
 }
 
-pub const XEN_SYSCTL_readconsole: u32 = 1;
-pub const XEN_SYSCTL_tbuf_op: u32 = 2;
-pub const XEN_SYSCTL_physinfo: u32 = 3;
-pub const XEN_SYSCTL_sched_id: u32 = 4;
-pub const XEN_SYSCTL_perfc_op: u32 = 5;
-pub const XEN_SYSCTL_getdomaininfolist: u32 = 6;
-pub const XEN_SYSCTL_debug_keys: u32 = 7;
-pub const XEN_SYSCTL_getcpuinfo: u32 = 8;
-pub const XEN_SYSCTL_availheap: u32 = 9;
-pub const XEN_SYSCTL_get_pmstat: u32 = 10;
-pub const XEN_SYSCTL_cpu_hotplug: u32 = 11;
-pub const XEN_SYSCTL_pm_op: u32 = 12;
-pub const XEN_SYSCTL_page_offline_op: u32 = 14;
-pub const XEN_SYSCTL_lockprof_op: u32 = 15;
-pub const XEN_SYSCTL_cputopoinfo: u32 = 16;
-pub const XEN_SYSCTL_numainfo: u32 = 17;
-pub const XEN_SYSCTL_cpupool_op: u32 = 18;
-pub const XEN_SYSCTL_scheduler_op: u32 = 19;
-pub const XEN_SYSCTL_coverage_op: u32 = 20;
-pub const XEN_SYSCTL_psr_cmt_op: u32 = 21;
-pub const XEN_SYSCTL_pcitopoinfo: u32 = 22;
-pub const XEN_SYSCTL_psr_alloc: u32 = 23;
-/* pub const XEN_SYSCTL_tmem_op: u32 = 24; */
-pub const XEN_SYSCTL_get_cpu_levelling_caps: u32 = 25;
-pub const XEN_SYSCTL_get_cpu_featureset: u32 = 26;
-pub const XEN_SYSCTL_livepatch_op: u32 = 27;
-/* pub const XEN_SYSCTL_set_parameter: u32 = 28; */
-pub const XEN_SYSCTL_get_cpu_policy: u32 = 29;
+pub fn do_sysctl(xen_sys_ctl: &mut XenSysctl) ->  Result<(), std::io::Error>
+{
+    let mut ret:Result<(), std::io::Error> = Ok(());
+    let size = round_up(std::mem::size_of::<XenSysctl>() as u64, PAGE_SIZE.into());
+    let fd = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(HYPERCALL_BUFFER_FILE)?;
 
-#[repr(C)]
-#[derive(Copy, Clone)]
-pub union XenSysctlPayload {
-    physinfo: XenSysctlPhysinfo,
-    pad: [u8; 128],
-}
+    unsafe {
+        // Setup a bounce buffer for Xen to use.
+        let vaddr: *mut XenSysctl = mmap(0 as *mut c_void, size as usize, PROT_READ | PROT_WRITE, MAP_SHARED, fd.as_raw_fd(), 0) as *mut XenSysctl;
 
-#[repr(C)]
-#[derive(Copy, Clone)]
-pub struct XenSysctl {
-    pub cmd: u32,
-    pub interface_version: u32, /* XEN_SYSCTL_INTERFACE_VERSION */
-    pub u: XenSysctlPayload,
+        // Function mmap() returns -1 in case of error.  Casting to i16 or i64
+        // yield the same result.
+        if *(vaddr as *mut i32) == -1 {
+            return Err(Error::last_os_error());
+        }
+
+        // Write content of XenSysctl to the bounce buffer so that Xen knows what
+        // we are asking for.
+        vaddr.write(*xen_sys_ctl);
+
+        let mut privcmd_hypercall = PrivCmdHypercall {
+            op: __HYPERVISOR_sysctl,
+            arg: [vaddr as u64, 0, 0, 0, 0],
+        };
+
+        match do_ioctl(&mut privcmd_hypercall) {
+            // Read back content from bounce buffer if no errors.
+            Ok(_) => *xen_sys_ctl = vaddr.read(),
+            Err(err) => ret = Err(err),
+        };
+
+        if munmap(vaddr as *mut c_void, size as usize) < 0 {
+            ret = Err(Error::last_os_error());
+        }
+    }
+
+    ret
 }
