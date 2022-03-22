@@ -20,6 +20,7 @@ pub const XEN_SYSCTL_INTERFACE_VERSION:u32 = 0x14;
 
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
+// xen/include/public/sysctl.h::struct xen_sysctl_physinfo
 pub struct XenSysctlPhysinfo {
     pub threads_per_core: u32,
     pub cores_per_socket: u32,
@@ -35,6 +36,16 @@ pub struct XenSysctlPhysinfo {
     pub outstanding_pages: U64Aligned,
     pub max_mfn: U64Aligned,
     pub hw_cap: [u32; 8],
+}
+
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone)]
+// xen/include/public/sysctl.h::struct xen_sysctl_getdomaininfolist
+pub struct XenSysctlGetdomaininfolist {
+    pub first_domain: u16,
+    pub max_domain: u32,
+    pub buffer: U64Aligned,
+    pub num_domains: u32,
 }
 
 pub const XEN_SYSCTL_readconsole: u32 = 1;
@@ -69,6 +80,7 @@ pub const XEN_SYSCTL_get_cpu_policy: u32 = 29;
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub union XenSysctlPayload {
+    pub domaininfolist: XenSysctlGetdomaininfolist,
     pub physinfo: XenSysctlPhysinfo,
     pad: [u8; 128],
 }
