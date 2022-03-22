@@ -13,3 +13,10 @@
 pub struct U64Aligned {
     pub v: u64,
 }
+
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone)]
+pub struct XenArchDomainconfig {
+    emulation_flags: u32,
+    misc_flags: u32,
+}
