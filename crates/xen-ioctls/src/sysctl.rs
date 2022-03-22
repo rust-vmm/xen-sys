@@ -13,22 +13,8 @@ use std::fs::{OpenOptions};
 use std::os::unix::io::AsRawFd;
 use libc::{c_void, ioctl, mmap, munmap, MAP_SHARED, PROT_READ, PROT_WRITE};
 
-use crate::privcmd::*;
+use crate::private::*;
 use crate::sysctl_types::XenSysctl;
-
-const HYPERCALL_PRIVCMD: &str = "/dev/xen/privcmd";
-const HYPERCALL_BUFFER_FILE: &str = "/dev/xen/hypercall";
-
-fn round_up(value: u64, scale: u64) -> u64
-{
-    let mut ceiling: u64 = scale;
-
-    while ceiling < value {
-        ceiling += scale;
-    }
-
-    ceiling
-}
 
 unsafe fn do_ioctl(data: *mut PrivCmdHypercall) -> Result<(), std::io::Error>
 {
@@ -37,7 +23,7 @@ unsafe fn do_ioctl(data: *mut PrivCmdHypercall) -> Result<(), std::io::Error>
         .write(true)
         .open(HYPERCALL_PRIVCMD)?;
 
-    let ret = ioctl(fd.as_raw_fd(), crate::privcmd::IOCTL_PRIVCMD_HYPERCALL, data);
+    let ret = ioctl(fd.as_raw_fd(), crate::private::IOCTL_PRIVCMD_HYPERCALL, data);
 
     if ret == 0 {
         return Ok(());

@@ -23,10 +23,24 @@ pub const XC_HYPERCALL_BUFFER_BOUNCE_IN:u32 = 1;
 pub const XC_HYPERCALL_BUFFER_BOUNCE_OUT:u32 = 2;
 pub const XC_HYPERCALL_BUFFER_BOUNCE_BOTH:u32 = 3;
 
+pub const HYPERCALL_PRIVCMD: &str = "/dev/xen/privcmd";
+pub const HYPERCALL_BUFFER_FILE: &str = "/dev/xen/hypercall";
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Default)]
 pub struct PrivCmdHypercall
 {
 	pub op: u64,
 	pub arg: [u64; 5],
+}
+
+pub fn round_up(value: u64, scale: u64) -> u64
+{
+    let mut ceiling: u64 = scale;
+
+    while ceiling < value {
+        ceiling += scale;
+    }
+
+    ceiling
 }
