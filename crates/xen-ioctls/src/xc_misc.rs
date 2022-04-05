@@ -17,7 +17,7 @@ use crate::aarch64::types::*;
 
 use crate::private::*;
 use crate::sysctl_types::*;
-use crate::xen_types::*;
+use crate::domctl_types::*;
 use crate::sysctl::do_sysctl;
 
 pub fn get_domain_infolist(first_domain: u16, max_domain: u32) -> Result<Vec<XenDomctlGetDomainInfo>, std::io::Error> {
