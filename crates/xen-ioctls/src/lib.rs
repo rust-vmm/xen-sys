@@ -11,7 +11,7 @@
 pub mod private;
 pub mod xc_misc;
 pub mod sysctl_types;
-pub mod xen_types;
+pub mod domctl_types;
 
 pub mod sysctl;
 
