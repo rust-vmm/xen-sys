@@ -12,27 +12,22 @@ use libc::{c_ulong};
 use std::fs::OpenOptions;
 use std::io::Error;
 use std::os::unix::io::AsRawFd;
-use libc::{c_void, mmap, munmap, MAP_SHARED, PROT_READ, PROT_WRITE};
+use libc::{c_void, ioctl, mmap, munmap, MAP_SHARED, PROT_READ, PROT_WRITE};
 
 pub const PAGE_SHIFT:u32 = 12;
 pub const PAGE_SIZE:u32 = 1 << PAGE_SHIFT;
-pub const PAGE_MASK:u64 = !(PAGE_SIZE as u64 - 1);
 
-pub const __HYPERVISOR_sysctl:u64 = 35;
+pub const __HYPERVISOR_SYSCTL:u64 = 35;
+pub const __HYPERVISOR_DOMCTL:u64 = 36;
 
 pub const IOCTL_PRIVCMD_HYPERCALL:c_ulong = 0x305000;
-
-pub const XC_HYPERCALL_BUFFER_BOUNCE_NONE:u32 = 0;
-pub const XC_HYPERCALL_BUFFER_BOUNCE_IN:u32 = 1;
-pub const XC_HYPERCALL_BUFFER_BOUNCE_OUT:u32 = 2;
-pub const XC_HYPERCALL_BUFFER_BOUNCE_BOTH:u32 = 3;
 
 pub const HYPERCALL_PRIVCMD: &str = "/dev/xen/privcmd";
 pub const HYPERCALL_BUFFER_FILE: &str = "/dev/xen/hypercall";
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Default)]
-pub struct PrivCmdHypercall
+pub(crate) struct PrivCmdHypercall
 {
 	pub op: u64,
 	pub arg: [u64; 5],
@@ -44,7 +39,7 @@ pub(crate) struct BounceBuffer {
 }
 
 impl BounceBuffer {
-    pub fn new(size: usize) -> Result<BounceBuffer, std::io::Error> {
+    pub(crate) fn new(size: usize) -> Result<BounceBuffer, std::io::Error> {
         let bounce_buffer_size = round_up(size as u64, PAGE_SIZE.into());
         let fd = OpenOptions::new()
             .read(true)
@@ -74,7 +69,7 @@ impl BounceBuffer {
         }
     }
 
-    pub fn to_vaddr(&self) -> *mut u8 {
+    pub(crate) fn to_vaddr(&self) -> *mut u8 {
         self.vaddr.clone()
     }
 }
@@ -98,4 +93,20 @@ pub fn round_up(value: u64, scale: u64) -> usize
     }
 
     ceiling as usize
+}
+
+pub(crate) unsafe fn do_ioctl(data: *mut PrivCmdHypercall) -> Result<(), std::io::Error>
+{
+    let fd = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(HYPERCALL_PRIVCMD)?;
+
+    let ret = ioctl(fd.as_raw_fd(), crate::private::IOCTL_PRIVCMD_HYPERCALL, data);
+
+    if ret == 0 {
+        return Ok(());
+    }
+
+    Err(Error::last_os_error())
 }

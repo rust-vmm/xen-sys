@@ -16,6 +16,21 @@ use crate::x86_64::types::*;
 #[cfg(target_arch = "aarch64")]
 use crate::aarch64::types::*;
 
+pub const XEN_DOMCTL_INTERFACE_VERSION:u32 = 0x14;
+
+pub const XEN_DOMINF_dying: u32 = 0b1;
+pub const XEN_DOMINF_hvm_guest: u32 = 0b10;
+pub const XEN_DOMINF_shutdown: u32 = 0b100;
+pub const XEN_DOMINF_paused: u32 = 0b1000;
+pub const XEN_DOMINF_blocked: u32 = 0b10000;
+pub const XEN_DOMINF_running: u32 = 0b100000;
+pub const XEN_DOMINF_debugged: u32 = 0b1000000;
+pub const XEN_DOMINF_xs_domain: u32 = 0b10000000;
+pub const XEN_DOMINF_hap: u32 = 0b100000000;
+pub const XEN_DOMINF_shutdownmask: u32 = 255;
+pub const XEN_DOMINF_shutdownshift: u32 = 16;
+pub const SHUTDOWN_crash: u32 = 3;
+
 // xen/include/public/domctl.h::struct xen_domctl_getdomaininfo
 // sizeof(struct xen_domctl_get_domaininfo) == 120
 #[repr(C)]
@@ -39,4 +54,28 @@ pub struct XenDomctlGetDomainInfo {
     pub gpaddr_bits: u8,
     pad2: [u8; 7],
     pub arch_config: XenArchDomainconfig,
+}
+
+pub const XEN_DOMCTL_createdomain: u32 = 1;
+pub const XEN_DOMCTL_destroydomain: u32 = 2;
+pub const XEN_DOMCTL_pausedomain: u32 = 3;
+pub const XEN_DOMCTL_unpausedomain: u32 = 4;
+pub const XEN_DOMCTL_getdomaininfo: u32 = 5;
+
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union XenDomctlPayload {
+    pub domaininfo: XenDomctlGetDomainInfo,
+    pad: [u8; 128],
+}
+
+#[repr(C)]
+#[derive(Copy, Clone)]
+// xen/include/public/domctl.h::struct xen_domctl
+pub struct XenDomctl {
+    pub cmd: u32,
+    pub interface_version: u32, /* XEN_DOMCTL_INTERFACE_VERSION */
+    pub domain: u16,
+    pub pad: [u16; 3],
+    pub u: XenDomctlPayload,
 }
