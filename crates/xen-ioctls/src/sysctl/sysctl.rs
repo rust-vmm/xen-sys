@@ -8,7 +8,7 @@
  * except according to those terms.
  */
 
-use std::{slice};
+use std::slice;
 
 #[cfg(target_arch = "x86_64")]
 use crate::x86_64::types::*;
@@ -16,11 +16,41 @@ use crate::x86_64::types::*;
 use crate::aarch64::types::*;
 
 use crate::private::*;
-use crate::sysctl_types::*;
-use crate::domctl_types::*;
-use crate::sysctl::do_sysctl;
+use crate::sysctl::types::*;
+use crate::domctl::types::*;
 
-pub fn get_domain_infolist(first_domain: u16, max_domain: u32) -> Result<Vec<XenDomctlGetDomainInfo>, std::io::Error> {
+fn do_sysctl(xen_sysctl: &mut XenSysctl) ->  Result<(), std::io::Error> {
+    let bouncebuffer = BounceBuffer::new(std::mem::size_of::<XenSysctl>())?;
+    let vaddr = bouncebuffer.to_vaddr() as *mut XenSysctl;
+    let mut privcmd_hypercall = PrivCmdHypercall {
+        op: __HYPERVISOR_SYSCTL,
+        arg: [vaddr as u64, 0, 0, 0, 0],
+    };
+
+    unsafe {
+        // Write content of XenSysctl to the bounce buffer so that Xen knows what
+        // we are asking for.
+        vaddr.write(*xen_sysctl);
+
+        do_ioctl(&mut privcmd_hypercall).map(|_| {
+            // Read back content from bounce buffer if no errors.
+            *xen_sysctl = vaddr.read();
+        })
+    }
+}
+
+pub fn xc_physinfo() -> Result<XenSysctlPhysinfo, std::io::Error>
+{
+    let mut sysctl = XenSysctl {
+        cmd: XEN_SYSCTL_physinfo,
+        interface_version: XEN_SYSCTL_INTERFACE_VERSION,
+        u: XenSysctlPayload { physinfo: XenSysctlPhysinfo::default() },
+    };
+
+    do_sysctl(&mut sysctl).map(|_| unsafe { sysctl.u.physinfo.clone() })
+}
+
+pub fn xc_domain_getinfolist(first_domain: u16, max_domain: u32) -> Result<Vec<XenDomctlGetDomainInfo>, std::io::Error> {
     let bouncebuffer = BounceBuffer::new(std::mem::size_of::<XenDomctlGetDomainInfo>() * max_domain as usize)?;
     let vaddr = bouncebuffer.to_vaddr() as *mut XenDomctlGetDomainInfo;
 
@@ -43,15 +73,4 @@ pub fn get_domain_infolist(first_domain: u16, max_domain: u32) -> Result<Vec<Xen
             slice::from_raw_parts(vaddr, sysctl.u.domaininfolist.num_domains as usize).to_vec()
         }
     })
-}
-
-pub fn get_physinfo() -> Result<XenSysctlPhysinfo, std::io::Error>
-{
-    let mut sysctl = XenSysctl {
-        cmd: XEN_SYSCTL_physinfo,
-        interface_version: XEN_SYSCTL_INTERFACE_VERSION,
-        u: XenSysctlPayload { physinfo: XenSysctlPhysinfo::default() },
-    };
-
-    do_sysctl(&mut sysctl).map(|_| unsafe { sysctl.u.physinfo.clone() })
 }
