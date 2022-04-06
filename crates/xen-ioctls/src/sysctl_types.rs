@@ -75,6 +75,7 @@ pub union XenSysctlPayload {
 
 #[repr(C)]
 #[derive(Copy, Clone)]
+// xen/include/public/sysctl.h::struct xen_sysctl
 pub struct XenSysctl {
     pub cmd: u32,
     pub interface_version: u32, /* XEN_SYSCTL_INTERFACE_VERSION */
