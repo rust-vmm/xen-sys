@@ -95,14 +95,14 @@ pub fn round_up(value: u64, scale: u64) -> usize
     ceiling as usize
 }
 
-pub(crate) unsafe fn do_ioctl(data: *mut PrivCmdHypercall) -> Result<(), std::io::Error>
+pub(crate) unsafe fn do_ioctl(request: c_ulong, data: *mut c_void) -> Result<(), std::io::Error>
 {
     let fd = OpenOptions::new()
         .read(true)
         .write(true)
         .open(HYPERCALL_PRIVCMD)?;
 
-    let ret = ioctl(fd.as_raw_fd(), crate::private::IOCTL_PRIVCMD_HYPERCALL, data);
+    let ret = ioctl(fd.as_raw_fd(), request, data);
 
     if ret == 0 {
         return Ok(());
