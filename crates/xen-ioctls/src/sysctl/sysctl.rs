@@ -10,6 +10,8 @@
 
 use std::slice;
 
+use libc::c_void;
+
 #[cfg(target_arch = "x86_64")]
 use crate::x86_64::types::*;
 #[cfg(target_arch = "aarch64")]
@@ -26,13 +28,18 @@ fn do_sysctl(xen_sysctl: &mut XenSysctl) ->  Result<(), std::io::Error> {
         op: __HYPERVISOR_SYSCTL,
         arg: [vaddr as u64, 0, 0, 0, 0],
     };
+    /*
+     * The expression "&mut privcmd_hypercall as *mut _" creates a reference
+     * to privcmd_hypercall before casting it to a *mut c_void
+     */
+    let privcmd_ptr: *mut c_void = &mut privcmd_hypercall as *mut _ as *mut c_void;
 
     unsafe {
         // Write content of XenSysctl to the bounce buffer so that Xen knows what
         // we are asking for.
         vaddr.write(*xen_sysctl);
 
-        do_ioctl(&mut privcmd_hypercall).map(|_| {
+        do_ioctl(IOCTL_PRIVCMD_HYPERCALL, privcmd_ptr).map(|_| {
             // Read back content from bounce buffer if no errors.
             *xen_sysctl = vaddr.read();
         })
