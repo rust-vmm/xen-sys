@@ -34,7 +34,7 @@ pub(crate) struct PrivCmdHypercall
 }
 
 pub(crate) struct BounceBuffer {
-    vaddr: *mut u8,
+    vaddr: *mut c_void,
     size: usize,
 }
 
@@ -48,8 +48,8 @@ impl BounceBuffer {
 
         unsafe {
             // Setup a bounce buffer for Xen to use.
-            let vaddr: *mut u8 = mmap(0 as *mut c_void, bounce_buffer_size,
-                                      PROT_READ | PROT_WRITE, MAP_SHARED, fd.as_raw_fd(), 0) as *mut u8;
+            let vaddr = mmap(0 as *mut c_void, bounce_buffer_size,
+                            PROT_READ | PROT_WRITE, MAP_SHARED, fd.as_raw_fd(), 0) as *mut u8;
 
             // Function mmap() returns -1 in case of error.  Casting to i16 or i64
             // yield the same result.
@@ -63,13 +63,13 @@ impl BounceBuffer {
             vaddr.write_bytes(0, bounce_buffer_size);
 
             Ok( BounceBuffer {
-                vaddr,
+                vaddr: vaddr as *mut c_void,
                 size: bounce_buffer_size,
             })
         }
     }
 
-    pub(crate) fn to_vaddr(&self) -> *mut u8 {
+    pub(crate) fn to_vaddr(&self) -> *mut c_void {
         self.vaddr.clone()
     }
 }
@@ -77,7 +77,7 @@ impl BounceBuffer {
 impl Drop for BounceBuffer {
     fn drop(&mut self) {
         unsafe {
-            if munmap(self.vaddr as *mut c_void, self.size) < 0 {
+            if munmap(self.vaddr, self.size) < 0 {
                 println!("Error {} unmapping vaddr: {:?}", Error::last_os_error(), self.vaddr);
             }
         }
