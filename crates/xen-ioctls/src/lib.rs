@@ -9,9 +9,9 @@
  */
 
 pub(crate) mod private;
-pub mod sysctl;
-pub mod domctl;
-pub mod xfm;
+mod sysctl;
+mod domctl;
+mod xfm;
 
 
 #[cfg(target_arch = "x86_64")]
@@ -19,4 +19,6 @@ mod x86_64;
 #[cfg(target_arch = "aarch64")]
 mod aarch64;
 
-//pub use domctl::*;
+pub use domctl::*;
+pub use sysctl::*;
+pub use xfm::*;

@@ -8,6 +8,9 @@
  * except according to those terms.
  */
 
-pub mod types;
-pub mod xc_types;
-pub mod domctl;
+pub(crate) mod types;
+mod xc_types;
+mod domctl;
+
+pub use xc_types::*;
+pub use domctl::*;
