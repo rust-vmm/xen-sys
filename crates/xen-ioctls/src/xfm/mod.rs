@@ -8,6 +8,9 @@
  * except according to those terms.
  */
 
-pub mod types;
-pub mod xfm_types;
-pub mod xfm;
+mod types;
+mod xfm_types;
+mod xfm;
+
+pub use xfm_types::*;
+pub use xfm::*;
