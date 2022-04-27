@@ -1,0 +1,106 @@
+/*
+ * Copyright 2022-23 Mathieu Poirier <mathieu.poirier@linaro.org>
+ *
+ * Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+ * http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+ * <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+ * option. This file may not be copied, modified, or distributed
+ * except according to those terms.
+ */
+
+use std::fs::OpenOptions;
+use std::io::{Error, ErrorKind};
+use std::os::unix::io::AsRawFd;
+use libc::{c_void, mmap, munmap, MAP_SHARED, MAP_PRIVATE, PROT_READ, PROT_WRITE};
+
+use crate::private::*;
+use crate::xfm::types::*;
+use crate::xfm::xfm_types::*;
+
+fn map_from_address(addr: *mut c_void, size: usize,
+                    prot: i32, flags: i32, offset: i64)
+                    -> Result<*mut c_void, std::io::Error> {
+    let fd = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open(HYPERCALL_PRIVCMD)?;
+
+    unsafe {
+        let vaddr = mmap(addr, size, prot, flags,
+                        fd.as_raw_fd(), offset) as *mut c_void;
+
+        // Function mmap() returns -1 in case of error.  Casting to i16 or i64
+        // yield the same result.
+        if vaddr as i8 == -1 {
+            return Err(Error::last_os_error());
+        }
+
+        Ok(vaddr)
+    }
+}
+
+pub fn xenforeignmemory_map_resource(domid: u16, r#type: u32, id: u32, frame: u32,
+                                nr_frames: u64, addr: *mut c_void, prot: i32, flags: i32)
+                                -> Result<XenForeignMemoryResourceHandle, std::io::Error> {
+    let mut privcmd_mmapresource = PrivCmdMmapResource {
+        dom: domid,
+        r#type,
+        id,
+        idx: frame,
+        num: nr_frames,
+        addr: 0,
+    };
+    /*
+     * The expression "&mut privcmd_mmapresource as *mut _" creates a reference
+     * to privcmd_mmapresource before casting it to a *mut c_void
+     */
+    let privcmd_ptr: *mut c_void = &mut privcmd_mmapresource as *mut _ as *mut c_void;
+
+    /* Check flags only contains POSIX defined values */
+    if (flags & !( MAP_SHARED | MAP_PRIVATE)) != 0 {
+        return Err(Error::new(ErrorKind::Other, "Invalid flags"));
+    }
+
+    if addr.is_null() && nr_frames != 0 {
+        privcmd_mmapresource.addr = map_from_address(addr, (nr_frames << PAGE_SHIFT) as usize,
+                                                    PROT_READ | PROT_WRITE,
+                                                    flags | MAP_SHARED, 0)? as u64;
+    }
+
+    unsafe {
+        match do_ioctl(IOCTL_MMAP_RESOURCE, privcmd_ptr) {
+            Ok(_) => {
+                Ok(XenForeignMemoryResourceHandle {
+                    domid,
+                    r#type,
+                    id,
+                    frame: frame as u64,
+                    nr_frames: privcmd_mmapresource.num,
+                    addr: privcmd_mmapresource.addr as *mut c_void,
+                    prot,
+                    flags,
+                })
+            }
+            Err(e) => {
+                if !addr.is_null() {
+                    if munmap(privcmd_mmapresource.addr as *mut c_void, (nr_frames << PAGE_SHIFT) as usize) < 0 {
+                        println!("Error {} unmapping vaddr: {:?}",
+                                Error::last_os_error(), privcmd_mmapresource.addr);
+                    }
+                }
+
+                Err(e)
+            }
+        }
+    }
+}
+
+pub fn xenforeignmemory_unmap_resource(resource: &XenForeignMemoryResourceHandle)-> Result<(), std::io::Error> {
+    unsafe {
+        if munmap(resource.addr, (resource.nr_frames << PAGE_SHIFT) as usize) < 0 {
+            Err(Error::last_os_error())
+        } else {
+            Ok(())
+        }
+    }
+}

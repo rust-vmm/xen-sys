@@ -8,15 +8,6 @@
  * except according to those terms.
  */
 
-pub(crate) mod private;
-pub mod sysctl;
-pub mod domctl;
+pub mod types;
+pub mod xfm_types;
 pub mod xfm;
-
-
-#[cfg(target_arch = "x86_64")]
-mod x86_64;
-#[cfg(target_arch = "aarch64")]
-mod aarch64;
-
-//pub use domctl::*;

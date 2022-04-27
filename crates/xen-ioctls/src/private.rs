@@ -20,6 +20,7 @@ pub const PAGE_SIZE:u32 = 1 << PAGE_SHIFT;
 pub const __HYPERVISOR_SYSCTL:u64 = 35;
 pub const __HYPERVISOR_DOMCTL:u64 = 36;
 
+pub const IOCTL_MMAP_RESOURCE:c_ulong = 0x205007;
 pub const IOCTL_PRIVCMD_HYPERCALL:c_ulong = 0x305000;
 
 pub const HYPERCALL_PRIVCMD: &str = "/dev/xen/privcmd";
