@@ -8,8 +8,8 @@
  * except according to those terms.
  */
 
-use xen_ioctls::domctl::domctl::*;
-use xen_ioctls::sysctl::sysctl::*;
+use xen_ioctls::{xc_physinfo, xc_domain_info};
+use xen_ioctls::xc_domain_getinfolist;
 
 fn main() {
 
