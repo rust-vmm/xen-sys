@@ -11,6 +11,8 @@
 #![allow(dead_code)]
 #![allow(non_upper_case_globals)]
 
+use libc::{c_void, c_int};
+
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 // tools/include/xen-sys/Linux/privcmd.h::privcmd_mmap_resource
@@ -24,5 +26,14 @@ pub struct PrivCmdMmapResource {
     pub addr: u64,
 }
 
-
-
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+// tools/include/xen-sys/Linux/privcmd.h::privcmd_mmapbatch_v2
+// sizeof(privcmd_mmapbatch_v2) == 32
+pub struct PrivCmdMmapBatchV2 {
+    pub num: u32,
+    pub dom: u16,
+    pub addr: *mut c_void,
+    pub arr: *const u64,
+    pub err: *mut c_int,
+}
