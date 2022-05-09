@@ -12,11 +12,11 @@ use std::convert::TryFrom;
 
 use libc::c_void;
 
-use crate::private::*;
 use crate::domctl::types::*;
 use crate::domctl::xc_types::XcDominfo;
+use crate::private::*;
 
-fn do_domctl(xen_domctl: &mut XenDomctl) ->  Result<(), std::io::Error> {
+fn do_domctl(xen_domctl: &mut XenDomctl) -> Result<(), std::io::Error> {
     let bouncebuffer = BounceBuffer::new(std::mem::size_of::<XenDomctl>())?;
     let vaddr = bouncebuffer.to_vaddr() as *mut XenDomctl;
     let mut privcmd_hypercall = PrivCmdHypercall {
@@ -51,11 +51,13 @@ pub fn xc_domain_info(first_domain: u16, max_domain: u32) -> Vec<XcDominfo> {
             interface_version: XEN_DOMCTL_INTERFACE_VERSION,
             domain,
             pad: [0; 3],
-            u: XenDomctlPayload { domaininfo: XenDomctlGetDomainInfo::default() },
+            u: XenDomctlPayload {
+                domaininfo: XenDomctlGetDomainInfo::default(),
+            },
         };
 
         if do_domctl(&mut domctl).is_ok() {
-            if let Ok(dominfo) = XcDominfo::try_from( unsafe {domctl.u.domaininfo } ) {
+            if let Ok(dominfo) = XcDominfo::try_from(unsafe { domctl.u.domaininfo }) {
                 vec.push(dominfo);
             }
         }

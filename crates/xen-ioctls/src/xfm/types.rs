@@ -11,7 +11,7 @@
 #![allow(dead_code)]
 #![allow(non_upper_case_globals)]
 
-use libc::{c_void, c_int};
+use libc::{c_int, c_void};
 
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]

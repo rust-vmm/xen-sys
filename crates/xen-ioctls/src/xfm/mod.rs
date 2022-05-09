@@ -9,8 +9,8 @@
  */
 
 mod types;
-mod xfm_types;
 mod xfm;
+mod xfm_types;
 
-pub use xfm_types::*;
 pub use xfm::*;
+pub use xfm_types::*;
