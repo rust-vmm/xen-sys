@@ -8,31 +8,29 @@
  * except according to those terms.
  */
 
-use libc::{c_ulong};
+use libc::{c_ulong, c_void, ioctl, mmap, munmap, MAP_SHARED, PROT_READ, PROT_WRITE};
 use std::fs::OpenOptions;
 use std::io::Error;
 use std::os::unix::io::AsRawFd;
-use libc::{c_void, ioctl, mmap, munmap, MAP_SHARED, PROT_READ, PROT_WRITE};
 
-pub const PAGE_SHIFT:u32 = 12;
-pub const PAGE_SIZE:u32 = 1 << PAGE_SHIFT;
+pub const PAGE_SHIFT: u32 = 12;
+pub const PAGE_SIZE: u32 = 1 << PAGE_SHIFT;
 
-pub const __HYPERVISOR_SYSCTL:u64 = 35;
-pub const __HYPERVISOR_DOMCTL:u64 = 36;
+pub const __HYPERVISOR_SYSCTL: u64 = 35;
+pub const __HYPERVISOR_DOMCTL: u64 = 36;
 
 pub const IOCTL_PRIVCMD_MMAPBATCH_V2: c_ulong = 0x205004;
-pub const IOCTL_MMAP_RESOURCE:c_ulong = 0x205007;
-pub const IOCTL_PRIVCMD_HYPERCALL:c_ulong = 0x305000;
+pub const IOCTL_MMAP_RESOURCE: c_ulong = 0x205007;
+pub const IOCTL_PRIVCMD_HYPERCALL: c_ulong = 0x305000;
 
 pub const HYPERCALL_PRIVCMD: &str = "/dev/xen/privcmd";
 pub const HYPERCALL_BUFFER_FILE: &str = "/dev/xen/hypercall";
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Default)]
-pub(crate) struct PrivCmdHypercall
-{
-	pub op: u64,
-	pub arg: [u64; 5],
+pub(crate) struct PrivCmdHypercall {
+    pub op: u64,
+    pub arg: [u64; 5],
 }
 
 pub(crate) struct BounceBuffer {
@@ -50,8 +48,14 @@ impl BounceBuffer {
 
         unsafe {
             // Setup a bounce buffer for Xen to use.
-            let vaddr = mmap(0 as *mut c_void, bounce_buffer_size,
-                            PROT_READ | PROT_WRITE, MAP_SHARED, fd.as_raw_fd(), 0) as *mut u8;
+            let vaddr = mmap(
+                0 as *mut c_void,
+                bounce_buffer_size,
+                PROT_READ | PROT_WRITE,
+                MAP_SHARED,
+                fd.as_raw_fd(),
+                0,
+            ) as *mut u8;
 
             // Function mmap() returns -1 in case of error.  Casting to i16 or i64
             // yield the same result.
@@ -64,7 +68,7 @@ impl BounceBuffer {
             // abort the transfer.
             vaddr.write_bytes(0, bounce_buffer_size);
 
-            Ok( BounceBuffer {
+            Ok(BounceBuffer {
                 vaddr: vaddr as *mut c_void,
                 size: bounce_buffer_size,
             })
@@ -80,14 +84,17 @@ impl Drop for BounceBuffer {
     fn drop(&mut self) {
         unsafe {
             if munmap(self.vaddr, self.size) < 0 {
-                println!("Error {} unmapping vaddr: {:?}", Error::last_os_error(), self.vaddr);
+                println!(
+                    "Error {} unmapping vaddr: {:?}",
+                    Error::last_os_error(),
+                    self.vaddr
+                );
             }
         }
     }
 }
 
-pub fn round_up(value: u64, scale: u64) -> usize
-{
+pub fn round_up(value: u64, scale: u64) -> usize {
     let mut ceiling: u64 = scale;
 
     while ceiling < value {
@@ -97,8 +104,7 @@ pub fn round_up(value: u64, scale: u64) -> usize
     ceiling as usize
 }
 
-pub(crate) unsafe fn do_ioctl(request: c_ulong, data: *mut c_void) -> Result<(), std::io::Error>
-{
+pub(crate) unsafe fn do_ioctl(request: c_ulong, data: *mut c_void) -> Result<(), std::io::Error> {
     let fd = OpenOptions::new()
         .read(true)
         .write(true)

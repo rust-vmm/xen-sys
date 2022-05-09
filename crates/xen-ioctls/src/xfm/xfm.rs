@@ -8,29 +8,32 @@
  * except according to those terms.
  */
 
+use libc::{c_int, c_void, mmap, munmap, ENOENT, MAP_PRIVATE, MAP_SHARED, PROT_READ, PROT_WRITE};
 use std::convert::TryInto;
 use std::fs::OpenOptions;
 use std::io::{Error, ErrorKind};
 use std::os::unix::io::AsRawFd;
-use std::{thread, time};
 use std::ptr;
-use libc::{c_int, c_void, mmap, munmap, MAP_SHARED, MAP_PRIVATE, PROT_READ, PROT_WRITE, ENOENT};
+use std::{thread, time};
 
 use crate::private::*;
 use crate::xfm::types::*;
 use crate::xfm::xfm_types::*;
 
-fn map_from_address(addr: *mut c_void, size: usize,
-                    prot: i32, flags: i32, offset: i64)
-                    -> Result<*mut c_void, std::io::Error> {
+fn map_from_address(
+    addr: *mut c_void,
+    size: usize,
+    prot: i32,
+    flags: i32,
+    offset: i64,
+) -> Result<*mut c_void, std::io::Error> {
     let fd = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .open(HYPERCALL_PRIVCMD)?;
+        .read(true)
+        .write(true)
+        .open(HYPERCALL_PRIVCMD)?;
 
     unsafe {
-        let vaddr = mmap(addr, size, prot, flags,
-                        fd.as_raw_fd(), offset) as *mut c_void;
+        let vaddr = mmap(addr, size, prot, flags, fd.as_raw_fd(), offset) as *mut c_void;
 
         // Function mmap() returns -1 in case of error.  Casting to i16 or i64
         // yield the same result.
@@ -42,9 +45,16 @@ fn map_from_address(addr: *mut c_void, size: usize,
     }
 }
 
-pub fn xenforeignmemory_map_resource(domid: u16, r#type: u32, id: u32, frame: u32,
-                                nr_frames: u64, addr: *mut c_void, prot: i32, flags: i32)
-                                -> Result<XenForeignMemoryResourceHandle, std::io::Error> {
+pub fn xenforeignmemory_map_resource(
+    domid: u16,
+    r#type: u32,
+    id: u32,
+    frame: u32,
+    nr_frames: u64,
+    addr: *mut c_void,
+    prot: i32,
+    flags: i32,
+) -> Result<XenForeignMemoryResourceHandle, std::io::Error> {
     let mut privcmd_mmapresource = PrivCmdMmapResource {
         dom: domid,
         r#type,
@@ -60,35 +70,44 @@ pub fn xenforeignmemory_map_resource(domid: u16, r#type: u32, id: u32, frame: u3
     let privcmd_ptr: *mut c_void = &mut privcmd_mmapresource as *mut _ as *mut c_void;
 
     /* Check flags only contains POSIX defined values */
-    if (flags & !( MAP_SHARED | MAP_PRIVATE)) != 0 {
+    if (flags & !(MAP_SHARED | MAP_PRIVATE)) != 0 {
         return Err(Error::new(ErrorKind::Other, "Invalid flags"));
     }
 
     if addr.is_null() && nr_frames != 0 {
-        privcmd_mmapresource.addr = map_from_address(addr, (nr_frames << PAGE_SHIFT) as usize,
-                                                    PROT_READ | PROT_WRITE,
-                                                    flags | MAP_SHARED, 0)? as u64;
+        privcmd_mmapresource.addr = map_from_address(
+            addr,
+            (nr_frames << PAGE_SHIFT) as usize,
+            PROT_READ | PROT_WRITE,
+            flags | MAP_SHARED,
+            0,
+        )? as u64;
     }
 
     unsafe {
         match do_ioctl(IOCTL_MMAP_RESOURCE, privcmd_ptr) {
-            Ok(_) => {
-                Ok(XenForeignMemoryResourceHandle {
-                    domid,
-                    r#type,
-                    id,
-                    frame: frame as u64,
-                    nr_frames: privcmd_mmapresource.num,
-                    addr: privcmd_mmapresource.addr as *mut c_void,
-                    prot,
-                    flags,
-                })
-            }
+            Ok(_) => Ok(XenForeignMemoryResourceHandle {
+                domid,
+                r#type,
+                id,
+                frame: frame as u64,
+                nr_frames: privcmd_mmapresource.num,
+                addr: privcmd_mmapresource.addr as *mut c_void,
+                prot,
+                flags,
+            }),
             Err(e) => {
                 if !addr.is_null() {
-                    if munmap(privcmd_mmapresource.addr as *mut c_void, (nr_frames << PAGE_SHIFT) as usize) < 0 {
-                        println!("Error {} unmapping vaddr: {:?}",
-                                Error::last_os_error(), privcmd_mmapresource.addr);
+                    if munmap(
+                        privcmd_mmapresource.addr as *mut c_void,
+                        (nr_frames << PAGE_SHIFT) as usize,
+                    ) < 0
+                    {
+                        println!(
+                            "Error {} unmapping vaddr: {:?}",
+                            Error::last_os_error(),
+                            privcmd_mmapresource.addr
+                        );
                     }
                 }
 
@@ -98,7 +117,9 @@ pub fn xenforeignmemory_map_resource(domid: u16, r#type: u32, id: u32, frame: u3
     }
 }
 
-pub fn xenforeignmemory_unmap_resource(resource: &XenForeignMemoryResourceHandle)-> Result<(), std::io::Error> {
+pub fn xenforeignmemory_unmap_resource(
+    resource: &XenForeignMemoryResourceHandle,
+) -> Result<(), std::io::Error> {
     unsafe {
         if munmap(resource.addr, (resource.nr_frames << PAGE_SHIFT) as usize) < 0 {
             Err(Error::last_os_error())
@@ -108,9 +129,13 @@ pub fn xenforeignmemory_unmap_resource(resource: &XenForeignMemoryResourceHandle
     }
 }
 
-fn retry_paged_pages(domid: u16, addr: *mut c_void, pages: u64,
-                     arr: *const u64, err: *mut c_int)
-                     -> Result<(), std::io::Error> {
+fn retry_paged_pages(
+    domid: u16,
+    addr: *mut c_void,
+    pages: u64,
+    arr: *const u64,
+    err: *mut c_int,
+) -> Result<(), std::io::Error> {
     let mut i = 0;
     let mut batch_start = 0;
 
@@ -137,7 +162,7 @@ fn retry_paged_pages(domid: u16, addr: *mut c_void, pages: u64,
             i += 1;
 
             /* Try to lump as many_ consecutive_ faulted  pages in the same request */
-            while i < pages  {
+            while i < pages {
                 if *err.add(i as usize) != -ENOENT {
                     break;
                 }
@@ -173,18 +198,26 @@ fn retry_paged_pages(domid: u16, addr: *mut c_void, pages: u64,
     }
 }
 
-pub fn xenforeignmemory_map(domid: u16, prot: i32, pages: u64,
-                            arr: *const u64, err: *mut c_int)
-                            -> Result<*mut c_void, std::io::Error> {
+pub fn xenforeignmemory_map(
+    domid: u16,
+    prot: i32,
+    pages: u64,
+    arr: *const u64,
+    err: *mut c_int,
+) -> Result<*mut c_void, std::io::Error> {
     let mut err_vec: Vec<c_int> = vec![0; pages as usize];
     let mut err_array: *mut c_int = err;
     let num: u32 = pages.try_into().map_err(|_| {
         return ErrorKind::InvalidInput;
     })?;
 
-    let addr: *mut c_void = map_from_address(ptr::null_mut(),
-                                            (pages << PAGE_SHIFT) as usize,
-                                            prot, MAP_SHARED, 0)?;
+    let addr: *mut c_void = map_from_address(
+        ptr::null_mut(),
+        (pages << PAGE_SHIFT) as usize,
+        prot,
+        MAP_SHARED,
+        0,
+    )?;
 
     if err.is_null() {
         err_array = err_vec.as_mut_ptr();
@@ -205,21 +238,19 @@ pub fn xenforeignmemory_map(domid: u16, prot: i32, pages: u64,
 
     unsafe {
         match do_ioctl(IOCTL_PRIVCMD_MMAPBATCH_V2, privcmd_ptr) {
-            Ok(_) => {
-                Ok(addr)
-            }
+            Ok(_) => Ok(addr),
             Err(e) => {
                 if e.raw_os_error() != Some(libc::ENOENT) {
                     return Err(e);
                 }
 
-                retry_paged_pages(domid, addr, pages, arr, err_array).map(|_| { addr })
+                retry_paged_pages(domid, addr, pages, arr, err_array).map(|_| addr)
             }
         }
     }
 }
 
-pub fn xenforeignmemory_unmap(addr: *mut c_void, pages: u64)-> Result<(), std::io::Error> {
+pub fn xenforeignmemory_unmap(addr: *mut c_void, pages: u64) -> Result<(), std::io::Error> {
     unsafe {
         if munmap(addr, (pages << PAGE_SHIFT) as usize) < 0 {
             Err(Error::last_os_error())

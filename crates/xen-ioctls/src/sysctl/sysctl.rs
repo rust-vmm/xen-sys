@@ -12,16 +12,16 @@ use std::slice;
 
 use libc::c_void;
 
-#[cfg(target_arch = "x86_64")]
-use crate::x86_64::types::*;
 #[cfg(target_arch = "aarch64")]
 use crate::aarch64::types::*;
+#[cfg(target_arch = "x86_64")]
+use crate::x86_64::types::*;
 
+use crate::domctl::types::*;
 use crate::private::*;
 use crate::sysctl::types::*;
-use crate::domctl::types::*;
 
-fn do_sysctl(xen_sysctl: &mut XenSysctl) ->  Result<(), std::io::Error> {
+fn do_sysctl(xen_sysctl: &mut XenSysctl) -> Result<(), std::io::Error> {
     let bouncebuffer = BounceBuffer::new(std::mem::size_of::<XenSysctl>())?;
     let vaddr = bouncebuffer.to_vaddr() as *mut XenSysctl;
     let mut privcmd_hypercall = PrivCmdHypercall {
@@ -46,38 +46,40 @@ fn do_sysctl(xen_sysctl: &mut XenSysctl) ->  Result<(), std::io::Error> {
     }
 }
 
-pub fn xc_physinfo() -> Result<XenSysctlPhysinfo, std::io::Error>
-{
+pub fn xc_physinfo() -> Result<XenSysctlPhysinfo, std::io::Error> {
     let mut sysctl = XenSysctl {
         cmd: XEN_SYSCTL_physinfo,
         interface_version: XEN_SYSCTL_INTERFACE_VERSION,
-        u: XenSysctlPayload { physinfo: XenSysctlPhysinfo::default() },
+        u: XenSysctlPayload {
+            physinfo: XenSysctlPhysinfo::default(),
+        },
     };
 
     do_sysctl(&mut sysctl).map(|_| unsafe { sysctl.u.physinfo.clone() })
 }
 
-pub fn xc_domain_getinfolist(first_domain: u16, max_domain: u32) -> Result<Vec<XenDomctlGetDomainInfo>, std::io::Error> {
-    let bouncebuffer = BounceBuffer::new(std::mem::size_of::<XenDomctlGetDomainInfo>() * max_domain as usize)?;
+pub fn xc_domain_getinfolist(
+    first_domain: u16,
+    max_domain: u32,
+) -> Result<Vec<XenDomctlGetDomainInfo>, std::io::Error> {
+    let bouncebuffer =
+        BounceBuffer::new(std::mem::size_of::<XenDomctlGetDomainInfo>() * max_domain as usize)?;
     let vaddr = bouncebuffer.to_vaddr() as *mut XenDomctlGetDomainInfo;
 
     let mut sysctl = XenSysctl {
         cmd: XEN_SYSCTL_getdomaininfolist,
         interface_version: XEN_SYSCTL_INTERFACE_VERSION,
-        u: XenSysctlPayload { domaininfolist: XenSysctlGetdomaininfolist {
+        u: XenSysctlPayload {
+            domaininfolist: XenSysctlGetdomaininfolist {
                 first_domain,
                 max_domain,
-                buffer: U64Aligned {
-                    v: vaddr as u64,
-                },
+                buffer: U64Aligned { v: vaddr as u64 },
                 num_domains: 0,
             },
         },
     };
 
-    do_sysctl(&mut sysctl).map(|_| {
-        unsafe {
-            slice::from_raw_parts(vaddr, sysctl.u.domaininfolist.num_domains as usize).to_vec()
-        }
+    do_sysctl(&mut sysctl).map(|_| unsafe {
+        slice::from_raw_parts(vaddr, sysctl.u.domaininfolist.num_domains as usize).to_vec()
     })
 }
