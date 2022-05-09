@@ -8,7 +8,7 @@
  * except according to those terms.
  */
 
-mod types;
 mod sysctl;
+mod types;
 
 pub use sysctl::*;

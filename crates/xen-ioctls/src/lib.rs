@@ -8,16 +8,15 @@
  * except according to those terms.
  */
 
+mod domctl;
 pub(crate) mod private;
 mod sysctl;
-mod domctl;
 mod xfm;
 
-
-#[cfg(target_arch = "x86_64")]
-mod x86_64;
 #[cfg(target_arch = "aarch64")]
 mod aarch64;
+#[cfg(target_arch = "x86_64")]
+mod x86_64;
 
 pub use domctl::*;
 pub use sysctl::*;

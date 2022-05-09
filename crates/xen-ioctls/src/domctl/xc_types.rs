@@ -13,16 +13,16 @@
 
 use std::convert::TryFrom;
 
-#[cfg(target_arch = "x86_64")]
-use crate::x86_64::types::*;
 #[cfg(target_arch = "aarch64")]
 use crate::aarch64::types::*;
+#[cfg(target_arch = "x86_64")]
+use crate::x86_64::types::*;
 
 use crate::domctl::types::*;
 use crate::private::PAGE_SHIFT;
 
 #[derive(Debug, Default, Copy, Clone)]
-// tools/include/xenctrl.h::xc_dominfo 
+// tools/include/xenctrl.h::xc_dominfo
 pub struct XcDominfo {
     pub domid: u16,
     pub ssidref: u32,
@@ -37,7 +37,7 @@ pub struct XcDominfo {
     pub xenstore: bool,
     pub hap: bool,
     pub shutdown_reason: u32, /* only meaningful if shutdown==1 */
-    pub nr_pages: u64, /* current number, not maximum */
+    pub nr_pages: u64,        /* current number, not maximum */
     pub nr_outstanding_pages: u64,
     pub nr_shared_pages: u64,
     pub nr_paged_pages: u64,
@@ -56,8 +56,8 @@ impl TryFrom<XenDomctlGetDomainInfo> for XcDominfo {
     type Error = ();
 
     fn try_from(info: XenDomctlGetDomainInfo) -> Result<Self, Self::Error> {
-        let shutdown_reason: u32 = (info.flags >> XEN_DOMINF_shutdownshift) &
-                                    XEN_DOMINF_shutdownmask;
+        let shutdown_reason: u32 =
+            (info.flags >> XEN_DOMINF_shutdownshift) & XEN_DOMINF_shutdownmask;
 
         let mut shutdown: bool = (info.flags & XEN_DOMINF_shutdown) != 0;
         let mut crashed: bool = false;
@@ -95,6 +95,4 @@ impl TryFrom<XenDomctlGetDomainInfo> for XcDominfo {
             arch_config: info.arch_config,
         })
     }
- }
-
-
+}

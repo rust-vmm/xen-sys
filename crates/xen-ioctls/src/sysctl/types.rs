@@ -11,12 +11,12 @@
 #![allow(dead_code)]
 #![allow(non_upper_case_globals)]
 
-#[cfg(target_arch = "x86_64")]
-use crate::x86_64::types::*;
 #[cfg(target_arch = "aarch64")]
 use crate::aarch64::types::*;
+#[cfg(target_arch = "x86_64")]
+use crate::x86_64::types::*;
 
-pub const XEN_SYSCTL_INTERFACE_VERSION:u32 = 0x14;
+pub const XEN_SYSCTL_INTERFACE_VERSION: u32 = 0x14;
 
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
