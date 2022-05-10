@@ -61,7 +61,7 @@ pub fn xenforeignmemory_map_resource(
         id,
         idx: frame,
         num: nr_frames,
-        addr: 0,
+        addr: ptr::null_mut(),
     };
     /*
      * The expression "&mut privcmd_mmapresource as *mut _" creates a reference
@@ -81,7 +81,7 @@ pub fn xenforeignmemory_map_resource(
             PROT_READ | PROT_WRITE,
             flags | MAP_SHARED,
             0,
-        )? as u64;
+        )?;
     }
 
     unsafe {
@@ -92,14 +92,14 @@ pub fn xenforeignmemory_map_resource(
                 id,
                 frame: frame as u64,
                 nr_frames: privcmd_mmapresource.num,
-                addr: privcmd_mmapresource.addr as *mut c_void,
+                addr: privcmd_mmapresource.addr,
                 prot,
                 flags,
             }),
             Err(e) => {
                 if !addr.is_null() {
                     if munmap(
-                        privcmd_mmapresource.addr as *mut c_void,
+                        privcmd_mmapresource.addr,
                         (nr_frames << PAGE_SHIFT) as usize,
                     ) < 0
                     {
