@@ -14,7 +14,7 @@
 use libc::{c_int, c_void};
 
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 // tools/include/xen-sys/Linux/privcmd.h::privcmd_mmap_resource
 // sizeof(struct privcmd_mmap_resource) == 32
 pub struct PrivCmdMmapResource {
@@ -23,7 +23,7 @@ pub struct PrivCmdMmapResource {
     pub id: u32,
     pub idx: u32,
     pub num: u64,
-    pub addr: u64,
+    pub addr: *mut c_void,
 }
 
 #[repr(C)]
