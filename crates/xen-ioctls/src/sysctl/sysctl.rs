@@ -39,7 +39,7 @@ fn do_sysctl(xen_sysctl: &mut XenSysctl) -> Result<(), std::io::Error> {
         // we are asking for.
         vaddr.write(*xen_sysctl);
 
-        do_ioctl(IOCTL_PRIVCMD_HYPERCALL, privcmd_ptr).map(|_| {
+        do_ioctl(IOCTL_PRIVCMD_HYPERCALL(), privcmd_ptr).map(|_| {
             // Read back content from bounce buffer if no errors.
             *xen_sysctl = vaddr.read();
         })
