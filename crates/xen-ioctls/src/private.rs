@@ -12,6 +12,9 @@ use libc::{c_ulong, c_void, ioctl, mmap, munmap, MAP_SHARED, PROT_READ, PROT_WRI
 use std::fs::OpenOptions;
 use std::io::Error;
 use std::os::unix::io::AsRawFd;
+use vmm_sys_util::ioctl::_IOC_NONE;
+
+use crate::xfm::types::{PrivCmdMmapBatchV2, PrivCmdMmapResource};
 
 pub const PAGE_SHIFT: u32 = 12;
 pub const PAGE_SIZE: u32 = 1 << PAGE_SHIFT;
@@ -19,9 +22,43 @@ pub const PAGE_SIZE: u32 = 1 << PAGE_SHIFT;
 pub const __HYPERVISOR_SYSCTL: u64 = 35;
 pub const __HYPERVISOR_DOMCTL: u64 = 36;
 
-pub const IOCTL_PRIVCMD_MMAPBATCH_V2: c_ulong = 0x205004;
-pub const IOCTL_MMAP_RESOURCE: c_ulong = 0x205007;
-pub const IOCTL_PRIVCMD_HYPERCALL: c_ulong = 0x305000;
+pub const XEN_PRIVCMD_TYPE: u32 = 'P' as u32;
+
+/*
+ * #define IOCTL_PRIVCMD_HYPERCALL \
+ *      _IOC(_IOC_NONE, 'P', 0, sizeof(privcmd_hypercall_t))
+ */
+ioctl_ioc_nr!(
+    IOCTL_PRIVCMD_HYPERCALL,
+    _IOC_NONE,
+    XEN_PRIVCMD_TYPE,
+    0 as u32,
+    std::mem::size_of::<PrivCmdHypercall>() as u32
+);
+
+/*
+ * #define IOCTL_PRIVCMD_MMAPBATCH_V2 \
+ *      _IOC(_IOC_NONE, 'P', 4, sizeof(privcmd_mmapbatch_v2_t))
+ */
+ioctl_ioc_nr!(
+    IOCTL_PRIVCMD_MMAPBATCH_V2,
+    _IOC_NONE,
+    XEN_PRIVCMD_TYPE,
+    4 as u32,
+    std::mem::size_of::<PrivCmdMmapBatchV2>() as u32
+);
+
+/*
+ * #define IOCTL_PRIVCMD_MMAP_RESOURCE \
+ *      _IOC(_IOC_NONE, 'P', 7, sizeof(privcmd_mmapbatch_v2_t))
+ */
+ioctl_ioc_nr!(
+    IOCTL_PRIVCMD_MMAP_RESOURCE,
+    _IOC_NONE,
+    XEN_PRIVCMD_TYPE,
+    7 as u32,
+    std::mem::size_of::<PrivCmdMmapResource>() as u32
+);
 
 pub const HYPERCALL_PRIVCMD: &str = "/dev/xen/privcmd";
 pub const HYPERCALL_BUFFER_FILE: &str = "/dev/xen/hypercall";

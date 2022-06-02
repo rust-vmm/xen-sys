@@ -8,7 +8,7 @@
  * except according to those terms.
  */
 
-mod types;
+pub(crate) mod types;
 mod xfm;
 mod xfm_types;
 

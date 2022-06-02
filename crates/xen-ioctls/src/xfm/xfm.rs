@@ -85,7 +85,7 @@ pub fn xenforeignmemory_map_resource(
     }
 
     unsafe {
-        match do_ioctl(IOCTL_MMAP_RESOURCE, privcmd_ptr) {
+        match do_ioctl(IOCTL_PRIVCMD_MMAP_RESOURCE(), privcmd_ptr) {
             Ok(_) => Ok(XenForeignMemoryResourceHandle {
                 domid,
                 r#type,
@@ -177,7 +177,7 @@ fn retry_paged_pages(
              */
             let privcmd_ptr: *mut c_void = &mut privcmd_mmapbatch_v2 as *mut _ as *mut c_void;
 
-            match do_ioctl(IOCTL_PRIVCMD_MMAPBATCH_V2, privcmd_ptr) {
+            match do_ioctl(IOCTL_PRIVCMD_MMAPBATCH_V2(), privcmd_ptr) {
                 Ok(_) => {
                     continue;
                 }
@@ -237,7 +237,7 @@ pub fn xenforeignmemory_map(
     let privcmd_ptr: *mut c_void = &mut privcmd_mmapbatch_v2 as *mut _ as *mut c_void;
 
     unsafe {
-        match do_ioctl(IOCTL_PRIVCMD_MMAPBATCH_V2, privcmd_ptr) {
+        match do_ioctl(IOCTL_PRIVCMD_MMAPBATCH_V2(), privcmd_ptr) {
             Ok(_) => Ok(addr),
             Err(e) => {
                 if e.raw_os_error() != Some(libc::ENOENT) {

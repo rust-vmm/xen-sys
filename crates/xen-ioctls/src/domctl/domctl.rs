@@ -34,7 +34,7 @@ fn do_domctl(xen_domctl: &mut XenDomctl) -> Result<(), std::io::Error> {
         // we are asking for.
         vaddr.write(*xen_domctl);
 
-        do_ioctl(IOCTL_PRIVCMD_HYPERCALL, privcmd_ptr).map(|_| {
+        do_ioctl(IOCTL_PRIVCMD_HYPERCALL(), privcmd_ptr).map(|_| {
             // Read back content from bounce buffer if no errors.
             *xen_domctl = vaddr.read();
         })
