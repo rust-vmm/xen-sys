@@ -60,6 +60,7 @@ ioctl_ioc_nr!(
     std::mem::size_of::<PrivCmdMmapResource>() as u32
 );
 
+pub const HYPERCALL_EVTCHN: &str = "/dev/xen/evtchn";
 pub const HYPERCALL_PRIVCMD: &str = "/dev/xen/privcmd";
 pub const HYPERCALL_BUFFER_FILE: &str = "/dev/xen/hypercall";
 
