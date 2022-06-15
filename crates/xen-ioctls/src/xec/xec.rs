@@ -15,18 +15,18 @@ use std::fs::{File, OpenOptions};
 use std::io::{Error, Read, Write};
 use std::os::unix::io::AsRawFd;
 
-pub struct XenEventChannel {
+pub struct XenEventChannelHandle {
     fd: File,
 }
 
-impl XenEventChannel {
+impl XenEventChannelHandle {
     pub fn new() -> Result<Self, std::io::Error> {
         let fd = OpenOptions::new()
             .read(true)
             .write(true)
             .open(HYPERCALL_EVTCHN)?;
 
-        Ok(XenEventChannel { fd })
+        Ok(XenEventChannelHandle { fd })
     }
 
     pub fn bind_interdomain(&self, domid: u32, remote_port: u32) -> Result<u32, std::io::Error> {
