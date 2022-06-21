@@ -7,23 +7,9 @@
  * option. This file may not be copied, modified, or distributed
  * except according to those terms.
  */
-#[macro_use]
-extern crate vmm_sys_util;
 
-mod domctl;
-pub(crate) mod private;
-mod sysctl;
+pub(crate) mod types;
 mod xdm;
-mod xec;
-mod xfm;
 
-#[cfg(target_arch = "aarch64")]
-mod aarch64;
-#[cfg(target_arch = "x86_64")]
-mod x86_64;
-
-pub use domctl::*;
-pub use sysctl::*;
+pub use types::*;
 pub use xdm::*;
-pub use xec::*;
-pub use xfm::*;
