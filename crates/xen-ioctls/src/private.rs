@@ -15,6 +15,7 @@ use std::os::unix::io::AsRawFd;
 use vmm_sys_util::ioctl::_IOC_NONE;
 
 use crate::xfm::types::{PrivCmdMmapBatchV2, PrivCmdMmapResource};
+use crate::xdm::types::PrivcmdDeviceModelOp;
 
 pub const PAGE_SHIFT: u32 = 12;
 pub const PAGE_SIZE: u32 = 1 << PAGE_SHIFT;
@@ -46,6 +47,18 @@ ioctl_ioc_nr!(
     XEN_PRIVCMD_TYPE,
     4 as u32,
     std::mem::size_of::<PrivCmdMmapBatchV2>() as u32
+);
+
+/*
+ * #define IOCTL_PRIVCMD_DM_OP \
+ *      _IOC(_IOC_NONE, 'P', 5, sizeof(privcmd_dm_op))
+ */
+ioctl_ioc_nr!(
+    IOCTL_PRIVCMD_DM_OP,
+    _IOC_NONE,
+    XEN_PRIVCMD_TYPE,
+    5 as u32,
+    std::mem::size_of::<PrivcmdDeviceModelOp>() as u32
 );
 
 /*
