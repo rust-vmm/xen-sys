@@ -1,0 +1,14 @@
+[package]
+authors = ["Mathieu Poirier <mathieu.poirier@linaro.org"]
+description = "API to interact with the Xen store"
+repository = "https://gitlab.com/cardoe/oxerun.git"
+license = "Apache-2.0 OR MIT"
+name = "xen-store"
+readme = "README.md"
+version = "0.0.0-pre1"
+edition = "2018"
+
+[dependencies]
+libc = ">=0.2.95"
+vmm-sys-util = ">=0.9.0"
+nix = "0.24.1"
