@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "crates/xen",
+    "crates/xen-bindings",
     "crates/xen-ioctls",
     "crates/xen-store",
     "crates/xen-sys",

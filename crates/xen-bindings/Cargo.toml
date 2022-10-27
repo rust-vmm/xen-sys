@@ -1,0 +1,13 @@
+[package]
+authors = ["Mathieu Poirier <mathieu.poirier@linaro.org"]
+name = "xen-bindings"
+version = "0.0.0-pre1"
+description = "Rust FFI bindings to Xen generated using bindgen."
+repository = "https://gitlab.com/cardoe/oxerun.git"
+readme = "README.md"
+edition = "2021"
+keywords = ["bindings"]
+license = "BSD-3-Clause OR Apache-2.0"
+
+[build-dependencies]
+bindgen = ">=0.61.0"
