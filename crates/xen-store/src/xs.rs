@@ -25,6 +25,7 @@ use std::thread::JoinHandle;
 use vmm_sys_util::eventfd::{EventFd, EFD_SEMAPHORE};
 
 use crate::types::*;
+use xen_bindings::bindings::xs_watch_type;
 
 pub const XS_DIRECTORY: u32 = 1;
 pub const XS_READ: u32 = 2;
@@ -284,7 +285,7 @@ impl XenStoreHandle {
             .map(|_| ())
     }
 
-    pub fn read_watch(&self, index: usize) -> Result<String, std::io::Error> {
+    pub fn read_watch(&self, index: xs_watch_type) -> Result<String, std::io::Error> {
         let (lock, cvar) = &*self.watch_condvar;
 
         let mut watch_vec = lock.lock().unwrap();
@@ -304,11 +305,11 @@ impl XenStoreHandle {
 
                     let body = xsm.body.as_mut_str();
                     let v: Vec<&str> = body.split('\0').collect();
-                    if index >= v.len() {
+                    if index as usize >= v.len() {
                         return Err(Error::from(ErrorKind::InvalidInput));
                     }
 
-                    Ok(String::from(v[index]))
+                    Ok(String::from(v[index as usize]))
                 }
                 Err(e) => Err(e),
             },
