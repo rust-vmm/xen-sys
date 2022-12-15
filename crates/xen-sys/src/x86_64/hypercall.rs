@@ -11,12 +11,12 @@
 use core::arch::asm;
 use cty::c_long;
 
-/// x86_64 hypercalls are called at the address: 32 * HYPERCALL_NUM
+// x86_64 hypercalls are called at the address: 32 * HYPERCALL_NUM
 #[repr(C)]
 #[derive(Clone, Copy)]
 struct hypercall_entry([u8; 32]);
 
-/// pages on x86_64 are 4096 bytes giving us 128 32-byte entries
+// pages on x86_64 are 4096 bytes giving us 128 32-byte entries
 extern "C" {
     static HYPERCALL_PAGE: [hypercall_entry; 128];
 }
