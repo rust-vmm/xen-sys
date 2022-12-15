@@ -2,14 +2,18 @@
 
 # x86_64 or aarch64
 ARCH="x86_64"
+#ARCH="aarch64"
 
 # Path to Xen project source code
 XEN_DIR="/path/to/xen/project/xen/"
 
 if [ "$ARCH" = "x86_64" ]; then
-	bindgen wrapper_x86_64.h -o bindings_x86_64.rs \
+	bindgen wrapper_x86_64.h -o src/xen_bindings_x86_64.rs \
 	--ignore-functions \
 	--ignore-methods \
+	--no-layout-tests \
+	--use-core \
+	--ctypes-prefix=xen_bindings_x86_64_types \
 	-- \
 	-D__XEN_TOOLS__ \
 	-D__GLIBC_USE\(...\)=0 \
@@ -26,9 +30,12 @@ if [ "$ARCH" = "x86_64" ]; then
 	-I${XEN_DIR}/xen/include/xen/ \
 	-I${XEN_DIR}/xen/include/public/
 elif [ "$ARCH" = "aarch64" ]; then
-	bindgen wrapper_aarch64.h -o bindings_aarch64.rs \
+	bindgen wrapper_aarch64.h -o src/xen_bindings_aarch64.rs \
 	--ignore-functions \
 	--ignore-methods \
+	--no-layout-tests \
+	--use-core \
+	--ctypes-prefix=xen_bindings_aarch64_types \
 	-- \
 	-U__i386__ \
 	-U__x86_64__ \

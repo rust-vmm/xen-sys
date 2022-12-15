@@ -10,6 +10,8 @@
 // Keep this until https://github.com/rust-lang/rust-bindgen/issues/1651 is fixed.
 #![cfg_attr(test, allow(deref_nullptr, unaligned_references))]
 
+#![no_std]
+
 #[cfg(target_arch = "x86_64")]
 mod bindings_x86_64;
 #[cfg(target_arch = "aarch64")]
