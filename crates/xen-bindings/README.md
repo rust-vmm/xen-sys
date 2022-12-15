@@ -4,7 +4,7 @@ Rust FFI bindings for the Xen hypervisor and xentools generated using [bindgen](
 # Usage
 Add this to your `Cargo.toml`:
 ```toml
-xen-bindings = { git = "https://gitlab.com/mathieupoirier/oxerun/", branch = "xen-bindings" }
+xen-bindings = { git = "https://github.com/rust-vmm/xen-sys/", version = "v0.1.0" }
 ```
 You can then import the bindings where you need them:
 ```rust
