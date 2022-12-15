@@ -31,12 +31,4 @@ XEN_DIR="/path/to/xen/project/xen/"
 ```
 
 Failure to do so will result in a failure to regenerate the bindings.  Once the
-environment variables have been setup simply run the build.sh script.  The
-resulting files will be either bindings_x86_64.rs or bindings_aarch64.rs,
-depending on the targeted architecture.
-
-```bash
-
-$ ./build.sh
-$ copy bindings_x86_64.rs src/
-```
+environment variables have been setup simply run the build.sh script.
