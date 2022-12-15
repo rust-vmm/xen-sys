@@ -12,3 +12,4 @@ edition = "2018"
 
 [dependencies]
 cty = "=0.2.0"
+xen-bindings = { path = "../xen-bindings" }
