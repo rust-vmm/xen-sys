@@ -10,11 +10,8 @@
 
 #![allow(non_camel_case_types)]
 
-#[cfg(target_arch = "x86_64")]
-use crate::x86_64::*;
-
-#[cfg(target_arch = "aarch64")]
-use crate::aarch64::*;
+use xen_bindings::bindings::{CONSOLEIO_read, CONSOLEIO_write, __HYPERVISOR_console_io,
+                             __HYPERVISOR_sched_op, SCHEDOP_yield, SCHEDOP_shutdown};
 
 /// SCHEDOP_ defines from public/sched.h
 #[derive(Debug)]
