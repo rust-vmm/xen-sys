@@ -7,7 +7,6 @@
   "env": "",
   "executables": true,
   "features": "-mmx,-sse,+soft-float",
-  "has-elf-tls": false,
   "has-rpath": false,
   "is-builtin": false,
   "linker": "rust-lld",
