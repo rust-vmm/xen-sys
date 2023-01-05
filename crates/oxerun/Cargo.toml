@@ -13,5 +13,5 @@ edition = "2018"
 gitlab = { repository = "cardoe/oxerun" }
 
 [dependencies]
-xen = { path = "../../crates/xen", version = "0.0.0-pre" }
-xen-sys = { path = "../../crates/xen-sys", version = "0.0.0-pre" }
+xen = { path = "../xen", version = "0.0.0-pre" }
+xen-sys = { path = "../xen-sys", version = "0.0.0-pre" }
