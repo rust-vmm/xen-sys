@@ -1,17 +1,14 @@
 [package]
 authors = ["Doug Goldstein <cardoe@cardoe.com>"]
 description = "Compiler bits to create Rust unikernels for Xen"
-homepage = "https://gitlab.com/cardoe/oxerun"
-repository = "https://gitlab.com/cardoe/oxerun.git"
+homepage = "https://github.com/rust-vmm/xen-sys"
+repository = "https://github.com/rust-vmm/xen-sys.git"
 license = "MIT/Apache-2.0"
 name = "oxerun"
 readme = "README.md"
-version = "0.0.0-pre1"
+version = "0.1.0"
 edition = "2018"
 
-[badges]
-gitlab = { repository = "cardoe/oxerun" }
-
 [dependencies]
-xen = { path = "../xen", version = "0.0.0-pre" }
-xen-sys = { path = "../xen-sys", version = "0.0.0-pre" }
+xen = { path = "../xen" }
+xen-sys = { path = "../xen-sys" }
