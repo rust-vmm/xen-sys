@@ -2,13 +2,13 @@
 authors = ["Doug Goldstein <cardoe@cardoe.com>"]
 description = "Idomatic Rust interfaces to Xen hypercall APIs"
 categories = ["external-ffi-bindings"]
-homepage = "https://gitlab.com/cardoe/oxerun"
-repository = "https://gitlab.com/cardoe/oxerun.git"
+homepage = "https://github.com/rust-vmm/xen-sys"
+repository = "https://github.com/rust-vmm/xen-sys.git"
 license = "MIT/Apache-2.0"
 name = "xen"
 readme = "README.md"
-version = "0.0.0-pre1"
+version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-xen-sys = { version = "0.0.0-pre1", path = "../xen-sys" }
+xen-sys = { path = "../xen-sys" }

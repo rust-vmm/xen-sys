@@ -5,7 +5,7 @@ repository = "https://gitlab.com/cardoe/oxerun.git"
 license = "Apache-2.0 OR MIT"
 name = "xen-store"
 readme = "README.md"
-version = "0.0.0-pre1"
+version = "0.1.0"
 edition = "2018"
 
 [dependencies]
