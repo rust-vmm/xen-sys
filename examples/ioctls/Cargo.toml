@@ -1,13 +1,13 @@
 [package]
 authors = ["Mathieu Poirier <mathieu.poirier@linaro.org"]
 description = "Test application to test the Xen ioctls interface"
-homepage = "https://gitlab.com/cardoe/oxerun"
-repository = "https://gitlab.com/cardoe/oxerun.git"
+homepage = "https://github.com/rust-vmm/xen-sys"
+repository = "https://github.com/rust-vmm/xen-sys.git"
 license = "MIT/Apache-2.0"
 name = "ioctls"
 readme = "README.md"
-version = "0.0.0-pre1"
+version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-xen-ioctls = { path = "../../crates/xen-ioctls", version = "0.0.0-pre1" }
+xen-ioctls = { path = "../../crates/xen-ioctls" }
