@@ -7,7 +7,7 @@ members = [
     "crates/xen-sys",
 ]
 exclude = [
-    "examples/oxerun",
+    "crates/oxerun",
     "examples/ioctls",
     "examples/xstore",
 ]
