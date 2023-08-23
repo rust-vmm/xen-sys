@@ -14,8 +14,8 @@ use std::io::Error;
 use std::os::unix::io::AsRawFd;
 use vmm_sys_util::ioctl::_IOC_NONE;
 
+use crate::xdm::types::{PrivcmdDeviceModelIrqFd, PrivcmdDeviceModelOp};
 use crate::xfm::types::{PrivCmdMmapBatchV2, PrivCmdMmapResource};
-use crate::xdm::types::PrivcmdDeviceModelOp;
 
 pub const PAGE_SHIFT: u32 = 12;
 pub const PAGE_SIZE: u32 = 1 << PAGE_SHIFT;
@@ -71,6 +71,18 @@ ioctl_ioc_nr!(
     XEN_PRIVCMD_TYPE,
     7 as u32,
     std::mem::size_of::<PrivCmdMmapResource>() as u32
+);
+
+/*
+ * #define IOCTL_PRIVCMD_IRQFD \
+ *      _IOC(_IOC_NONE, 'P', 8, sizeof(privcmd_irqfd_t))
+ */
+ioctl_ioc_nr!(
+    IOCTL_PRIVCMD_IRQFD,
+    _IOC_NONE,
+    XEN_PRIVCMD_TYPE,
+    8 as u32,
+    std::mem::size_of::<PrivcmdDeviceModelIrqFd>() as u32
 );
 
 pub const HYPERCALL_EVTCHN: &str = "/dev/xen/evtchn";
