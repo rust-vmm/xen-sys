@@ -143,3 +143,17 @@ impl PrivcmdDeviceModelOp {
         PrivcmdDeviceModelOp { domid, num, ubufs }
     }
 }
+
+pub const PRIVCMD_IRQFD_FLAG_DEASSIGN: u32 = 1;
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+// tools/include/xen-sys/Linux/privcmd.h::privcmd_irqfd
+pub struct PrivcmdDeviceModelIrqFd {
+    pub dm_op: *mut c_void,
+    pub size: u32,
+    pub fd: u32,
+    pub flags: u32,
+    pub domid: u16,
+    pub pad: [u8; 2],
+}

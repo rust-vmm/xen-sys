@@ -15,6 +15,8 @@ use std::fs::{File, OpenOptions};
 use std::io::Error;
 use std::os::unix::io::AsRawFd;
 
+use vmm_sys_util::eventfd::EventFd;
+
 #[cfg(target_arch = "aarch64")]
 use crate::aarch64::types::*;
 #[cfg(target_arch = "x86_64")]
@@ -238,5 +240,71 @@ impl XenDeviceModelHandle {
         }];
 
         do_dm_op(&self.fd, domid, &mut privcmd_dm_op_buffers)
+    }
+
+    pub fn config_irqfd(
+        &self,
+        fd: EventFd,
+        domid: u16,
+        irq: u32,
+        level: u8,
+        flags: u32,
+    ) -> Result<(), std::io::Error> {
+        let mut dm_op = XenDeviceModelOp {
+            op: XEN_DMOP_set_irq_level,
+            pad: 0,
+            u: XenDeviceModelOpPayload {
+                xen_set_irq_level: XenDeviceModelSetIrqLevel {
+                    irq,
+                    level,
+                    ..Default::default()
+                },
+            },
+        };
+
+        let mut irqfd = PrivcmdDeviceModelIrqFd {
+            dm_op: &mut dm_op as *mut _ as *mut c_void,
+            size: std::mem::size_of::<XenDeviceModelOp>() as u32,
+            fd: fd.as_raw_fd() as u32,
+            flags,
+            domid,
+            pad: [0; 2],
+        };
+
+        let ret = unsafe {
+            // The expression "&mut irqfd as *mut _" creates a reference to irqfd before casting it
+            // to a *mut c_void.
+            ioctl(
+                self.fd.as_raw_fd(),
+                IOCTL_PRIVCMD_IRQFD(),
+                &mut irqfd as *mut _ as *mut c_void,
+            )
+        };
+
+        if ret < 0 {
+            return Err(Error::last_os_error());
+        }
+
+        Ok(())
+    }
+
+    pub fn set_irqfd(
+        &self,
+        fd: EventFd,
+        domid: u16,
+        irq: u32,
+        level: u8,
+    ) -> Result<(), std::io::Error> {
+        self.config_irqfd(fd, domid, irq, level, 0)
+    }
+
+    pub fn clear_irqfd(
+        &self,
+        fd: EventFd,
+        domid: u16,
+        irq: u32,
+        level: u8,
+    ) -> Result<(), std::io::Error> {
+        self.config_irqfd(fd, domid, irq, level, PRIVCMD_IRQFD_FLAG_DEASSIGN)
     }
 }
