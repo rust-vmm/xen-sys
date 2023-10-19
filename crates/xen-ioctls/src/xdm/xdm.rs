@@ -242,7 +242,7 @@ impl XenDeviceModelHandle {
         do_dm_op(&self.fd, domid, &mut privcmd_dm_op_buffers)
     }
 
-    pub fn config_irqfd(
+    fn config_irqfd(
         &self,
         fd: EventFd,
         domid: u16,
