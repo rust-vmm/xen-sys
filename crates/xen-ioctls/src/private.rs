@@ -12,7 +12,7 @@ use libc::{c_ulong, c_void, ioctl, mmap, munmap, MAP_SHARED, PROT_READ, PROT_WRI
 use std::fs::OpenOptions;
 use std::io::Error;
 use std::os::unix::io::AsRawFd;
-use vmm_sys_util::ioctl::_IOC_NONE;
+use vmm_sys_util::ioctl::{_IOC_NONE, _IOC_WRITE};
 
 use crate::xdm::types::{PrivcmdDeviceModelIrqFd, PrivcmdDeviceModelOp};
 use crate::xfm::types::{PrivCmdMmapBatchV2, PrivCmdMmapResource};
@@ -74,12 +74,11 @@ ioctl_ioc_nr!(
 );
 
 /*
- * #define IOCTL_PRIVCMD_IRQFD \
- *      _IOC(_IOC_NONE, 'P', 8, sizeof(privcmd_irqfd_t))
+ * #define IOCTL_PRIVCMD_IRQFD  _IOW('P', 8, privcmd_irqfd_t)
  */
 ioctl_ioc_nr!(
     IOCTL_PRIVCMD_IRQFD,
-    _IOC_NONE,
+    _IOC_WRITE,
     XEN_PRIVCMD_TYPE,
     8 as u32,
     std::mem::size_of::<PrivcmdDeviceModelIrqFd>() as u32
