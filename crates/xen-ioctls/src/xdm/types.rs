@@ -157,3 +157,21 @@ pub struct PrivcmdDeviceModelIrqFd {
     pub domid: u16,
     pub pad: [u8; 2],
 }
+
+pub const PRIVCMD_IOEVENTFD_FLAG_DEASSIGN: u32 = 1;
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+// tools/include/xen-sys/Linux/privcmd.h::privcmd_ioeventfd
+pub struct PrivcmdDeviceModelIoeventFd {
+    pub ioreq: *mut c_void,
+    pub ports: *const u32,
+    pub addr: u64,
+    pub addr_len: u32,
+    pub event_fd: u32,
+    pub vcpus: u32,
+    pub vq: u32,
+    pub flags: u32,
+    pub domid: u16,
+    pub pad: [u8; 2],
+}
