@@ -1,0 +1,14 @@
+[package]
+authors = ["Mathieu Poirier <mathieu.poirier@linaro.org"]
+description = "Xen syctcl ioctl call implementation"
+repository = "https://gitlab.com/cardoe/oxerun.git"
+license = "Apache-2.0 OR MIT"
+name = "xen-ioctls"
+readme = "README.md"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+libc = ">=0.2.95"
+vmm-sys-util = ">=0.9.0"
+xen-bindings = { path = "../xen-bindings" }

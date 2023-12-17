@@ -1,0 +1,10 @@
+[package]
+authors = ["Mathieu Poirier <mathieu.poirier@linaro.org"]
+name = "xen-bindings"
+version = "0.1.0"
+description = "Rust FFI bindings to Xen generated using bindgen."
+repository = "https://github.com/rust-vmm/xen-sys.git"
+readme = "README.md"
+edition = "2021"
+keywords = ["bindings"]
+license = "BSD-3-Clause OR Apache-2.0"
