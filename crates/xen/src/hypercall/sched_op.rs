@@ -18,7 +18,7 @@ fn op_shutdown(reason: u32) {
 #[no_mangle]
 pub extern "C" fn poweroff() -> ! {
     op_shutdown(SHUTDOWN_poweroff);
-    loop {}
+    unreachable!()
 }
 
 pub fn reboot() {

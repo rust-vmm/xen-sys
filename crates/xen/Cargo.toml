@@ -12,3 +12,6 @@ edition = "2018"
 
 [dependencies]
 xen-sys = { path = "../xen-sys" }
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target, values("x86_64-xen-pv"))'] }

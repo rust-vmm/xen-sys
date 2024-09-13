@@ -55,7 +55,7 @@ pub fn xc_physinfo() -> Result<XenSysctlPhysinfo, std::io::Error> {
         },
     };
 
-    do_sysctl(&mut sysctl).map(|_| unsafe { sysctl.u.physinfo.clone() })
+    do_sysctl(&mut sysctl).map(|_| unsafe { sysctl.u.physinfo })
 }
 
 pub fn xc_domain_getinfolist(
