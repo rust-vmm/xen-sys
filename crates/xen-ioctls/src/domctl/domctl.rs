@@ -56,9 +56,17 @@ pub fn xc_domain_info(first_domain: u16, max_domain: u32) -> Vec<XcDominfo> {
             },
         };
 
-        if do_domctl(&mut domctl).is_ok() {
-            if let Ok(dominfo) = XcDominfo::try_from(unsafe { domctl.u.domaininfo }) {
-                vec.push(dominfo);
+        match do_domctl(&mut domctl) {
+            Ok(()) => {
+                if let Ok(dominfo) = XcDominfo::try_from(unsafe { domctl.u.domaininfo }) {
+                    vec.push(dominfo);
+                }
+            }
+            Err(err) if err.raw_os_error() == Some(libc::EACCES) => {
+                eprintln!("Xen DOMCTL failed: {}\nCheck if XEN_DOMCTL_INTERFACE_VERSION in your Xen build matches the expected value of this xen-ioctls build: {:#04x}", err, XEN_DOMCTL_INTERFACE_VERSION);
+            }
+            Err(err) => {
+                eprintln!("Xen DOMCTL failed: {}", err);
             }
         }
 
