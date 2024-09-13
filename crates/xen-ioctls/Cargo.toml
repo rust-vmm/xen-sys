@@ -17,3 +17,4 @@ xen-bindings = { path = "../xen-bindings" }
 default = []
 "xen_domctl_interface_version_0x15" = []
 "xen_domctl_interface_version_0x16" = []
+"xen_domctl_interface_version_0x17" = []
