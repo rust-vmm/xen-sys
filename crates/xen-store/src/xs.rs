@@ -8,6 +8,8 @@
  * except according to those terms.
  */
 
+#![allow(clippy::type_complexity)]
+
 use libc::writev;
 use nix::libc::iovec;
 use std::collections::VecDeque;
@@ -45,10 +47,9 @@ fn queue_message(
 
     let mut queue = lock.lock().unwrap();
 
-    if eventfd.is_some() {
+    if let Some(eventfd) = eventfd {
         /* Increment evenfd counter to be consumed in read_watch() */
         let _ = eventfd
-            .unwrap()
             .write(1)
             .map_err(|e| println!("queue_message: error: {}", e));
     }
@@ -240,7 +241,7 @@ impl XenStoreHandle {
     }
 
     pub fn read_str(&self, path: &str) -> Result<String, std::io::Error> {
-        let c_path = CString::new(format!("{}", path))?;
+        let c_path = CString::new(path)?;
         let mut iovec_buffers = vec![iovec {
             iov_base: c_path.as_ptr() as *mut _,
             iov_len: path.len() + 1,
@@ -250,8 +251,8 @@ impl XenStoreHandle {
     }
 
     pub fn write_str(&self, path: &str, val: &str) -> Result<(), std::io::Error> {
-        let cpath = CString::new(format!("{}", path))?;
-        let cval = CString::new(format!("{}", val))?;
+        let cpath = CString::new(path)?;
+        let cval = CString::new(val)?;
         let mut iovec_buffers = vec![
             iovec {
                 iov_base: cpath.as_ptr() as *mut _,
@@ -268,8 +269,8 @@ impl XenStoreHandle {
     }
 
     pub fn create_watch(&self, path: &str, token: &str) -> Result<(), std::io::Error> {
-        let cpath = CString::new(format!("{}", path))?;
-        let ctoken = CString::new(format!("{}", token))?;
+        let cpath = CString::new(path)?;
+        let ctoken = CString::new(token)?;
         let mut iovec_buffers = vec![
             iovec {
                 iov_base: cpath.as_ptr() as *mut _,
@@ -322,7 +323,7 @@ impl XenStoreHandle {
     }
 
     pub fn directory(&self, path: &str) -> Result<Vec<i32>, std::io::Error> {
-        let c_path = CString::new(format!("{}", path))?;
+        let c_path = CString::new(path)?;
         let mut iovec_buffers = vec![iovec {
             iov_base: c_path.as_ptr() as *mut _,
             iov_len: path.len() + 1,

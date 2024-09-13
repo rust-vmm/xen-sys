@@ -1,4 +1,5 @@
 [workspace]
+resolver = "2"
 members = [
     "crates/xen",
     "crates/xen-bindings",
@@ -11,4 +12,3 @@ exclude = [
     "examples/ioctls",
     "examples/xstore",
 ]
-

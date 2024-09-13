@@ -35,7 +35,7 @@ ioctl_ioc_nr!(
     IOCTL_PRIVCMD_HYPERCALL,
     _IOC_NONE,
     XEN_PRIVCMD_TYPE,
-    0 as u32,
+    0_u32,
     std::mem::size_of::<PrivCmdHypercall>() as u32
 );
 
@@ -47,7 +47,7 @@ ioctl_ioc_nr!(
     IOCTL_PRIVCMD_MMAPBATCH_V2,
     _IOC_NONE,
     XEN_PRIVCMD_TYPE,
-    4 as u32,
+    4_u32,
     std::mem::size_of::<PrivCmdMmapBatchV2>() as u32
 );
 
@@ -59,7 +59,7 @@ ioctl_ioc_nr!(
     IOCTL_PRIVCMD_DM_OP,
     _IOC_NONE,
     XEN_PRIVCMD_TYPE,
-    5 as u32,
+    5_u32,
     std::mem::size_of::<PrivcmdDeviceModelOp>() as u32
 );
 
@@ -71,7 +71,7 @@ ioctl_ioc_nr!(
     IOCTL_PRIVCMD_MMAP_RESOURCE,
     _IOC_NONE,
     XEN_PRIVCMD_TYPE,
-    7 as u32,
+    7_u32,
     std::mem::size_of::<PrivCmdMmapResource>() as u32
 );
 
@@ -82,7 +82,7 @@ ioctl_ioc_nr!(
     IOCTL_PRIVCMD_IRQFD,
     _IOC_WRITE,
     XEN_PRIVCMD_TYPE,
-    8 as u32,
+    8_u32,
     std::mem::size_of::<PrivcmdDeviceModelIrqFd>() as u32
 );
 
@@ -93,7 +93,7 @@ ioctl_ioc_nr!(
     IOCTL_PRIVCMD_IOEVENTFD,
     _IOC_WRITE,
     XEN_PRIVCMD_TYPE,
-    9 as u32,
+    9_u32,
     std::mem::size_of::<PrivcmdDeviceModelIoeventFd>() as u32
 );
 
@@ -124,7 +124,7 @@ impl BounceBuffer {
         unsafe {
             // Setup a bounce buffer for Xen to use.
             let vaddr = mmap(
-                0 as *mut c_void,
+                core::ptr::null_mut::<c_void>(),
                 bounce_buffer_size,
                 PROT_READ | PROT_WRITE,
                 MAP_SHARED,
@@ -151,7 +151,7 @@ impl BounceBuffer {
     }
 
     pub(crate) fn to_vaddr(&self) -> *mut c_void {
-        self.vaddr.clone()
+        self.vaddr
     }
 }
 

@@ -7,6 +7,8 @@
  * option. This file may not be copied, modified, or distributed
  * except according to those terms.
  */
+#![allow(clippy::too_many_arguments, clippy::module_inception)]
+
 #[macro_use]
 extern crate vmm_sys_util;
 
