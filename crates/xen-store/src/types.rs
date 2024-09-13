@@ -25,6 +25,7 @@ pub(crate) struct XenSocketMessage {
 }
 
 impl XenSocketMessage {
+    #[allow(clippy::ptr_arg)]
     pub(crate) fn new(r#type: u32, iovec_buffers: &mut Vec<iovec>) -> Result<Self, std::io::Error> {
         let msg = XenSocketMessage {
             r#type,

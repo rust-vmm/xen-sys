@@ -23,7 +23,7 @@ ioctl_ioc_nr!(
     IOCTL_EVTCHN_BIND_INTERDOMAIN,
     _IOC_NONE,
     XEN_EVTCHN_TYPE,
-    1 as u32,
+    1_u32,
     std::mem::size_of::<XenIoctlEvtchnBindInterdomain>() as u32
 );
 
@@ -44,7 +44,7 @@ ioctl_ioc_nr!(
     IOCTL_EVTCHN_UNBIND,
     _IOC_NONE,
     XEN_EVTCHN_TYPE,
-    3 as u32,
+    3_u32,
     std::mem::size_of::<XenIoctlEvtchnUnbind>() as u32
 );
 
@@ -64,7 +64,7 @@ ioctl_ioc_nr!(
     IOCTL_EVTCHN_NOTIFY,
     _IOC_NONE,
     XEN_EVTCHN_TYPE,
-    4 as u32,
+    4_u32,
     std::mem::size_of::<XenIoctlEvtchnNotify>() as u32
 );
 

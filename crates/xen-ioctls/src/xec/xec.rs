@@ -32,7 +32,7 @@ impl XenEventChannelHandle {
     pub fn bind_interdomain(&self, domid: u32, remote_port: u32) -> Result<u32, std::io::Error> {
         let mut bind = XenIoctlEvtchnBindInterdomain {
             remote_domain: domid,
-            remote_port: remote_port,
+            remote_port,
         };
 
         /*
@@ -98,6 +98,6 @@ impl XenEventChannelHandle {
     }
 
     pub fn unmask(&mut self, port: u32) -> Result<(), std::io::Error> {
-        self.fd.write_all(&mut port.to_ne_bytes())
+        self.fd.write_all(&port.to_ne_bytes())
     }
 }

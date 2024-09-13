@@ -33,7 +33,7 @@ fn map_from_address(
         .open(HYPERCALL_PRIVCMD)?;
 
     unsafe {
-        let vaddr = mmap(addr, size, prot, flags, fd.as_raw_fd(), offset) as *mut c_void;
+        let vaddr = mmap(addr, size, prot, flags, fd.as_raw_fd(), offset).cast::<c_void>();
 
         // Function mmap() returns -1 in case of error.  Casting to i16 or i64
         // yield the same result.
@@ -97,18 +97,17 @@ pub fn xenforeignmemory_map_resource(
                 flags,
             }),
             Err(e) => {
-                if !addr.is_null() {
-                    if munmap(
+                if !addr.is_null()
+                    && munmap(
                         privcmd_mmapresource.addr,
                         (nr_frames << PAGE_SHIFT) as usize,
                     ) < 0
-                    {
-                        println!(
-                            "Error {} unmapping vaddr: {:?}",
-                            Error::last_os_error(),
-                            privcmd_mmapresource.addr
-                        );
-                    }
+                {
+                    println!(
+                        "Error {} unmapping vaddr: {:?}",
+                        Error::last_os_error(),
+                        privcmd_mmapresource.addr
+                    );
                 }
 
                 Err(e)
@@ -207,9 +206,7 @@ pub fn xenforeignmemory_map(
 ) -> Result<*mut c_void, std::io::Error> {
     let mut err_vec: Vec<c_int> = vec![0; pages as usize];
     let mut err_array: *mut c_int = err;
-    let num: u32 = pages.try_into().map_err(|_| {
-        return ErrorKind::InvalidInput;
-    })?;
+    let num: u32 = pages.try_into().map_err(|_| ErrorKind::InvalidInput)?;
 
     let addr: *mut c_void = map_from_address(
         ptr::null_mut(),
@@ -224,10 +221,10 @@ pub fn xenforeignmemory_map(
     }
 
     let mut privcmd_mmapbatch_v2 = PrivCmdMmapBatchV2 {
-        num: num,
+        num,
         dom: domid,
-        addr: addr,
-        arr: arr,
+        addr,
+        arr,
         err: err_array,
     };
     /*
@@ -250,6 +247,7 @@ pub fn xenforeignmemory_map(
     }
 }
 
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub fn xenforeignmemory_unmap(addr: *mut c_void, pages: u64) -> Result<(), std::io::Error> {
     unsafe {
         if munmap(addr, (pages << PAGE_SHIFT) as usize) < 0 {
