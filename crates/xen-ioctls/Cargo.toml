@@ -12,3 +12,9 @@ edition = "2018"
 libc = ">=0.2.95"
 vmm-sys-util = ">=0.9.0"
 xen-bindings = { path = "../xen-bindings" }
+
+[features]
+default = []
+"xen_domctl_interface_version_0x15" = []
+"xen_domctl_interface_version_0x16" = []
+"xen_domctl_interface_version_0x17" = []

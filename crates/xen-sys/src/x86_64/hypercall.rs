@@ -7,6 +7,7 @@
  * option. This file may not be copied, modified, or distributed
  * except according to those terms.
  */
+#![allow(clippy::missing_safety_doc)]
 
 use core::arch::asm;
 use cty::c_long;
@@ -29,13 +30,13 @@ pub unsafe fn hypercall_1(op: u32, a1: u64) -> c_long {
     let addr = HYPERCALL_PAGE.as_ptr().offset(op as isize);
 
     asm!(
-      "call {0}",
-      in(reg) addr,
-      inlateout("rax") addr => ret,
-      inlateout("rdi") a1 => _ign1,
-      options(nostack)
-  );
-  ret
+        "call {0}",
+        in(reg) addr,
+        inlateout("rax") addr => ret,
+        inlateout("rdi") a1 => _ign1,
+        options(nostack)
+    );
+    ret
 }
 
 #[no_mangle]

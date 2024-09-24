@@ -8,10 +8,12 @@
  * except according to those terms.
  */
 
-#![allow(non_camel_case_types)]
+#![allow(non_camel_case_types, clippy::missing_safety_doc)]
 
-use xen_bindings::bindings::{CONSOLEIO_read, CONSOLEIO_write, __HYPERVISOR_console_io,
-                             __HYPERVISOR_sched_op, SCHEDOP_yield, SCHEDOP_shutdown};
+use xen_bindings::bindings::{
+    CONSOLEIO_read, CONSOLEIO_write, SCHEDOP_shutdown, SCHEDOP_yield, __HYPERVISOR_console_io,
+    __HYPERVISOR_sched_op,
+};
 
 /// SCHEDOP_ defines from public/sched.h
 #[derive(Debug)]
