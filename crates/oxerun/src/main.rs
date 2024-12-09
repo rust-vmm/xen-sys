@@ -27,7 +27,7 @@ use xen::hypercall;
 entry_point!(hello_world);
 
 pub fn hello_world() -> Result<(), ()> {
-    let test = b"test";
+    let test = b"oxerun hello world\n";
 
     hypercall::console_io::write(test);
     Ok(())
