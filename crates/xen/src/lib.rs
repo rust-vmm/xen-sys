@@ -8,6 +8,8 @@
  * except according to those terms.
  */
 
+#![allow(internal_features)]
+#![feature(lang_items)]
 #![no_std]
 
 #[cfg(target_arch = "x86_64")]
