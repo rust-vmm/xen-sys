@@ -8,7 +8,10 @@
  * except according to those terms.
  */
 
+#![allow(clippy::missing_safety_doc)]
+
 use core::arch::asm;
+
 use cty::c_long;
 
 #[no_mangle]
