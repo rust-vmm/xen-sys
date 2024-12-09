@@ -21,11 +21,11 @@ use core::arch::asm;
 #[cfg(target_arch = "x86_64")]
 use core::arch::global_asm;
 
-use xen::entry_point;
-use xen::hypercall;
+use xen::{entry_point, hypercall};
 
 entry_point!(hello_world);
 
+#[allow(clippy::result_unit_err)]
 pub fn hello_world() -> Result<(), ()> {
     let test = b"oxerun hello world\n";
 
