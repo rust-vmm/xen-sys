@@ -8,8 +8,10 @@
  * except according to those terms.
  */
 
-use xen_sys::hypercall::{sched_op, SchedOp};
-use xen_sys::{SHUTDOWN_crash, SHUTDOWN_poweroff, SHUTDOWN_reboot};
+use xen_sys::{
+    hypercall::{sched_op, SchedOp},
+    SHUTDOWN_crash, SHUTDOWN_poweroff, SHUTDOWN_reboot,
+};
 
 fn op_shutdown(reason: u32) {
     unsafe { sched_op(SchedOp::shutdown, reason) };
