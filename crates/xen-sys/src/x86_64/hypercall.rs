@@ -10,6 +10,7 @@
 #![allow(clippy::missing_safety_doc)]
 
 use core::arch::asm;
+
 use cty::c_long;
 
 // x86_64 hypercalls are called at the address: 32 * HYPERCALL_NUM
