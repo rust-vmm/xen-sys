@@ -12,8 +12,9 @@
 
 extern crate xen_sys;
 
-use crate::hypercall;
 use core::arch::global_asm;
+
+use crate::hypercall;
 
 #[cfg(target_arch = "aarch64")]
 #[lang = "eh_personality"]
@@ -29,6 +30,7 @@ pub extern "C" fn do_bad_mode() -> ! {
     hypercall::console_io::write(b"bad mode\n");
     hypercall::sched_op::crash();
 
+    #[allow(clippy::empty_loop)]
     loop {}
 }
 
@@ -37,6 +39,7 @@ pub extern "C" fn do_trap_sync() -> ! {
     hypercall::console_io::write(b"trap sync\n");
     hypercall::sched_op::crash();
 
+    #[allow(clippy::empty_loop)]
     loop {}
 }
 
@@ -45,18 +48,20 @@ pub extern "C" fn do_trap_irq() -> ! {
     hypercall::console_io::write(b"trap irq\n");
     hypercall::sched_op::crash();
 
+    #[allow(clippy::empty_loop)]
     loop {}
 }
 
-/// Defines the necessary functions and handlers to write a main function in Rust
+/// Defines the necessary functions and handlers to write a main function in
+/// Rust
 ///
 /// The function must have the signature `fn() -> !`.
 ///
-/// This macro creates a function named `_start`, which Xen uses as the entry point.
-/// This will perform the necessary startup actions for Xen before handing control
-/// to your function. It additionally defines a panic handler and a stack unwinder
-/// so that your application does not have to. The macro ensures that the main
-/// function is the proper type.
+/// This macro creates a function named `_start`, which Xen uses as the entry
+/// point. This will perform the necessary startup actions for Xen before
+/// handing control to your function. It additionally defines a panic handler
+/// and a stack unwinder so that your application does not have to. The macro
+/// ensures that the main function is the proper type.
 ///
 /// Inspired by Philip Opperman's https://github.com/rust-osdev/bootloader
 #[macro_export]
