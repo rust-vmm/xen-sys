@@ -10,4 +10,4 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-xen-store = { path = "../../crates/xen-store" }
+xen-store = { path = "../../xen-store" }

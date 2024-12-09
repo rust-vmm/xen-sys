@@ -1,5 +1,5 @@
 {
-  "coverage_score": 0,
-  "exclude_path": "crates",
+  "coverage_score": 18.58,
+  "exclude_path": "oxerun",
   "crate_features": ""
 }

@@ -10,4 +10,4 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-xen-ioctls = { path = "../../crates/xen-ioctls" }
+xen-ioctls = { path = "../../xen-ioctls" }
