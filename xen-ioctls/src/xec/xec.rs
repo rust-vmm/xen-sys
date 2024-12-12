@@ -9,6 +9,7 @@
  */
 
 use std::{
+    convert::TryInto,
     fs::{File, OpenOptions},
     io::{Error, Read, Write},
     os::unix::io::AsRawFd,
@@ -47,7 +48,8 @@ impl XenEventChannelHandle {
         unsafe {
             match ioctl(
                 self.fd.as_raw_fd(),
-                IOCTL_EVTCHN_BIND_INTERDOMAIN(),
+                #[allow(clippy::useless_conversion)]
+                IOCTL_EVTCHN_BIND_INTERDOMAIN().try_into().unwrap(),
                 bind_ptr,
             ) {
                 ret if ret < 0 => Err(Error::last_os_error()),
@@ -65,7 +67,12 @@ impl XenEventChannelHandle {
         let unbind_ptr: *mut c_void = &mut unbind as *mut _ as *mut c_void;
 
         unsafe {
-            match ioctl(self.fd.as_raw_fd(), IOCTL_EVTCHN_UNBIND(), unbind_ptr) {
+            match ioctl(
+                self.fd.as_raw_fd(),
+                #[allow(clippy::useless_conversion)]
+                IOCTL_EVTCHN_UNBIND().try_into().unwrap(),
+                unbind_ptr,
+            ) {
                 ret if ret < 0 => Err(Error::last_os_error()),
                 ret => Ok(ret as u32),
             }
@@ -85,7 +92,12 @@ impl XenEventChannelHandle {
         let notify_ptr: *mut c_void = &mut notify as *mut _ as *mut c_void;
 
         unsafe {
-            match ioctl(self.fd.as_raw_fd(), IOCTL_EVTCHN_NOTIFY(), notify_ptr) {
+            match ioctl(
+                self.fd.as_raw_fd(),
+                #[allow(clippy::useless_conversion)]
+                IOCTL_EVTCHN_NOTIFY().try_into().unwrap(),
+                notify_ptr,
+            ) {
                 ret if ret < 0 => Err(Error::last_os_error()),
                 ret => Ok(ret as u32),
             }
