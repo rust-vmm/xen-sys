@@ -17,13 +17,11 @@ use std::{
     mem,
     net::Shutdown,
     os::unix::{io::AsRawFd, net::UnixStream},
-    slice,
     sync::{Arc, Condvar, Mutex},
     thread,
     thread::JoinHandle,
 };
 
-use libc::writev;
 use nix::libc::iovec;
 use vmm_sys_util::eventfd::{EventFd, EFD_SEMAPHORE};
 use xen_bindings::bindings::xs_watch_type;
@@ -71,78 +69,79 @@ fn thread_function(
         Condvar,
     )>,
 ) -> Result<(), std::io::Error> {
-    let xen_socket_msg_size = mem::size_of::<XenSocketMessage>();
-
     loop {
         let mut xen_socket_reply_msg = XenSocketMessage::default();
         let mut buffer: Vec<u8> = vec![0];
         let mut condvar = reply_condvar.clone();
         let mut eventfd: Option<EventFd> = None;
 
-        unsafe {
-            let xen_socket_reply_msg_slice = slice::from_raw_parts_mut(
-                &mut xen_socket_reply_msg as *mut _ as *mut u8,
-                xen_socket_msg_size,
-            );
+        {
+            // SAFETY: `xen_socket_reply_msg` is `XenSocketMessage` bytes sized.
+            let xen_socket_reply_msg_slice: &mut [u8] = unsafe {
+                std::slice::from_raw_parts_mut(
+                    std::ptr::addr_of_mut!(xen_socket_reply_msg).cast(),
+                    mem::size_of::<XenSocketMessage>(),
+                )
+            };
 
             rx_socket.read_exact(xen_socket_reply_msg_slice)?;
+        }
 
-            if xen_socket_reply_msg.r#type == XS_READ && xen_socket_reply_msg.len == 0 {
+        if xen_socket_reply_msg.r#type == XS_READ && xen_socket_reply_msg.len == 0 {
+            queue_message(
+                &condvar,
+                eventfd,
+                Ok(XenStoreMessage {
+                    r#type: xen_socket_reply_msg.r#type,
+                    body: "".to_string(),
+                }),
+            );
+            continue;
+        }
+
+        buffer.resize(xen_socket_reply_msg.len as usize, 0);
+
+        rx_socket.read_exact(buffer.as_mut_slice())?;
+
+        if xen_socket_reply_msg.r#type != XS_READ
+            && xen_socket_reply_msg.r#type != XS_WRITE
+            && xen_socket_reply_msg.r#type != XS_WATCH
+            && xen_socket_reply_msg.r#type != XS_WATCH_EVENT
+            && xen_socket_reply_msg.r#type != XS_DIRECTORY
+        {
+            queue_message(
+                &condvar,
+                eventfd,
+                Err(Error::new(ErrorKind::Other, "Xen Store transaction error")),
+            );
+            continue;
+        }
+
+        if xen_socket_reply_msg.r#type == XS_WATCH_EVENT {
+            condvar = watch_condvar.clone();
+            eventfd = Some(tx_eventfd.try_clone()?);
+        }
+
+        match String::from_utf8(buffer) {
+            Ok(result) => {
+                if result.len() != xen_socket_reply_msg.len as usize {
+                    queue_message(&condvar, eventfd, Err(Error::from(ErrorKind::InvalidData)));
+                    continue;
+                }
+
                 queue_message(
                     &condvar,
                     eventfd,
                     Ok(XenStoreMessage {
                         r#type: xen_socket_reply_msg.r#type,
-                        body: "".to_string(),
+                        body: result,
                     }),
                 );
-                continue;
             }
-
-            buffer.resize(xen_socket_reply_msg.len as usize, 0);
-
-            rx_socket.read_exact(buffer.as_mut_slice())?;
-
-            if xen_socket_reply_msg.r#type != XS_READ
-                && xen_socket_reply_msg.r#type != XS_WRITE
-                && xen_socket_reply_msg.r#type != XS_WATCH
-                && xen_socket_reply_msg.r#type != XS_WATCH_EVENT
-                && xen_socket_reply_msg.r#type != XS_DIRECTORY
-            {
-                queue_message(
-                    &condvar,
-                    eventfd,
-                    Err(Error::new(ErrorKind::Other, "Xen Store transaction error")),
-                );
-                continue;
+            Err(e) => {
+                queue_message(&condvar, eventfd, Err(Error::new(ErrorKind::Other, e)));
             }
-
-            if xen_socket_reply_msg.r#type == XS_WATCH_EVENT {
-                condvar = watch_condvar.clone();
-                eventfd = Some(tx_eventfd.try_clone()?);
-            }
-
-            match String::from_utf8(buffer) {
-                Ok(result) => {
-                    if result.len() != xen_socket_reply_msg.len as usize {
-                        queue_message(&condvar, eventfd, Err(Error::from(ErrorKind::InvalidData)));
-                        continue;
-                    }
-
-                    queue_message(
-                        &condvar,
-                        eventfd,
-                        Ok(XenStoreMessage {
-                            r#type: xen_socket_reply_msg.r#type,
-                            body: result,
-                        }),
-                    );
-                }
-                Err(e) => {
-                    queue_message(&condvar, eventfd, Err(Error::new(ErrorKind::Other, e)));
-                }
-            };
-        }
+        };
     }
 }
 
@@ -195,49 +194,55 @@ impl XenStoreHandle {
         iovec_buffers: &mut Vec<iovec>,
     ) -> Result<String, std::io::Error> {
         let mut xen_socket_msg = XenSocketMessage::new(r#type, iovec_buffers)?;
-        let xen_socket_msg_size = mem::size_of::<XenSocketMessage>();
         let (lock, cvar) = &*self.reply_condvar;
 
-        unsafe {
-            let xen_socket_msg_slice = slice::from_raw_parts(
-                &mut xen_socket_msg as *mut _ as *mut u8,
-                xen_socket_msg_size,
-            );
+        let mut tx_socket = self.tx_socket.lock().unwrap();
+        {
+            // SAFETY: `xen_socket_msg` is `XenSocketMessage` bytes sized.
+            let xen_socket_msg_slice: &[u8] = unsafe {
+                std::slice::from_raw_parts(
+                    std::ptr::addr_of_mut!(xen_socket_msg).cast(),
+                    mem::size_of::<XenSocketMessage>(),
+                )
+            };
 
             /*
              * Grabbing the mutex guarantees there will only be
              * one active transcation at a time.
              */
-            let mut tx_socket = self.tx_socket.lock().unwrap();
             tx_socket.write_all(xen_socket_msg_slice)?;
+        }
 
-            let ret = writev(
+        // SAFETY: tx_socket is a valid file descriptor and the pointer/length we pass
+        // are valid allocated values.
+        let ret = unsafe {
+            libc::writev(
                 tx_socket.as_raw_fd(),
                 iovec_buffers.as_ptr(),
                 iovec_buffers.len() as i32,
-            );
+            )
+        };
 
-            if ret < 0 {
-                return Err(Error::last_os_error());
-            }
+        if ret < 0 {
+            return Err(Error::last_os_error());
+        }
 
-            let mut reply_vec = lock.lock().unwrap();
-            while reply_vec.is_empty() {
-                reply_vec = cvar.wait(reply_vec).unwrap();
-            }
+        let mut reply_vec = lock.lock().unwrap();
+        while reply_vec.is_empty() {
+            reply_vec = cvar.wait(reply_vec).unwrap();
+        }
 
-            match reply_vec.pop_front() {
-                Some(result) => match result {
-                    Ok(xsm) => {
-                        if xsm.r#type != r#type {
-                            return Err(Error::from(ErrorKind::InvalidData));
-                        }
-                        Ok(xsm.body)
+        match reply_vec.pop_front() {
+            Some(result) => match result {
+                Ok(xsm) => {
+                    if xsm.r#type != r#type {
+                        return Err(Error::from(ErrorKind::InvalidData));
                     }
-                    Err(e) => Err(e),
-                },
-                None => Err(Error::new(ErrorKind::Other, "Xen Store transaction error")),
-            }
+                    Ok(xsm.body)
+                }
+                Err(e) => Err(e),
+            },
+            None => Err(Error::new(ErrorKind::Other, "Xen Store transaction error")),
         }
     }
 
