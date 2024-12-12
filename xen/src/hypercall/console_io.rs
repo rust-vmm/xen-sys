@@ -13,6 +13,7 @@ use xen_sys::hypercall::{console_io, ConsoleIO};
 /// writes to the system serial console which
 /// is disabled for non-dom0 domains unless
 /// Xen is built with CONFIG_VERBOSE
+#[inline]
 pub fn write(out: &[u8]) {
-    unsafe { console_io(ConsoleIO::Write, out) };
+    console_io(ConsoleIO::Write, out);
 }
