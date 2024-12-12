@@ -16,19 +16,17 @@ use crate::aarch64::types::*;
 #[cfg(target_arch = "x86_64")]
 use crate::x86_64::types::*;
 
-#[cfg(feature = "xen_domctl_interface_version_0x15")]
-pub const XEN_DOMCTL_INTERFACE_VERSION: u32 = 0x15;
-#[cfg(feature = "xen_domctl_interface_version_0x16")]
-pub const XEN_DOMCTL_INTERFACE_VERSION: u32 = 0x16;
-#[cfg(any(
-    feature = "xen_domctl_interface_version_0x17",
-    not(any(
-        feature = "xen_domctl_interface_version_0x15",
-        feature = "xen_domctl_interface_version_0x16",
-        feature = "xen_domctl_interface_version_0x17"
-    ))
-))]
-pub const XEN_DOMCTL_INTERFACE_VERSION: u32 = 0x17;
+cfg_if::cfg_if! {
+    if #[cfg(feature = "xen_domctl_interface_version_0x17")] {
+        pub const XEN_DOMCTL_INTERFACE_VERSION: u32 = 0x17;
+    } else if #[cfg(feature = "xen_domctl_interface_version_0x16")] {
+        pub const XEN_DOMCTL_INTERFACE_VERSION: u32 = 0x16;
+    } else if #[cfg(feature = "xen_domctl_interface_version_0x15")] {
+        pub const XEN_DOMCTL_INTERFACE_VERSION: u32 = 0x15;
+    } else {
+        pub const XEN_DOMCTL_INTERFACE_VERSION: u32 = 0x17;
+    }
+}
 
 pub const XEN_DOMINF_dying: u32 = 0b1;
 pub const XEN_DOMINF_hvm_guest: u32 = 0b10;
