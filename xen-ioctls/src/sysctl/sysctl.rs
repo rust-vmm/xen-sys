@@ -8,10 +8,6 @@
  * except according to those terms.
  */
 
-use std::slice;
-
-use libc::c_void;
-
 #[cfg(target_arch = "aarch64")]
 use crate::aarch64::types::*;
 #[cfg(target_arch = "x86_64")]
@@ -20,27 +16,30 @@ use crate::{domctl::types::*, private::*, sysctl::types::*};
 
 fn do_sysctl(xen_sysctl: &mut XenSysctl) -> Result<(), std::io::Error> {
     let bouncebuffer = BounceBuffer::new(std::mem::size_of::<XenSysctl>())?;
-    let vaddr = bouncebuffer.to_vaddr() as *mut XenSysctl;
-    let mut privcmd_hypercall = PrivCmdHypercall {
+    let vaddr = bouncebuffer.vaddr() as *mut XenSysctl;
+    let mut privcmd = PrivCmdHypercall {
         op: __HYPERVISOR_SYSCTL,
         arg: [vaddr as u64, 0, 0, 0, 0],
     };
-    /*
-     * The expression "&mut privcmd_hypercall as *mut _" creates a reference
-     * to privcmd_hypercall before casting it to a *mut c_void
-     */
-    let privcmd_ptr: *mut c_void = &mut privcmd_hypercall as *mut _ as *mut c_void;
 
+    // Write content of XenSysctl to the bounce buffer so that Xen knows what
+    // we are asking for.
+    // SAFETY: vaddr points to valid memory allocated when we created the bounce
+    // buffer
+    unsafe { vaddr.write(*xen_sysctl) };
+
+    // SAFETY: we pass a PrivCmdHypercall value to an IOCTL_PRIVCMD_HYPERCALL ioctl
     unsafe {
-        // Write content of XenSysctl to the bounce buffer so that Xen knows what
-        // we are asking for.
-        vaddr.write(*xen_sysctl);
-
-        do_ioctl(IOCTL_PRIVCMD_HYPERCALL(), privcmd_ptr).map(|_| {
-            // Read back content from bounce buffer if no errors.
-            *xen_sysctl = vaddr.read();
-        })
-    }
+        do_ioctl(
+            IOCTL_PRIVCMD_HYPERCALL(),
+            std::ptr::addr_of_mut!(privcmd).cast(),
+        )?
+    };
+    // Read back content from bounce buffer if no errors.
+    // SAFETY: the ioctl succeeded and vaddr was previously successfully allocated
+    // by us
+    *xen_sysctl = unsafe { vaddr.read() };
+    Ok(())
 }
 
 pub fn xc_physinfo() -> Result<XenSysctlPhysinfo, std::io::Error> {
@@ -52,7 +51,11 @@ pub fn xc_physinfo() -> Result<XenSysctlPhysinfo, std::io::Error> {
         },
     };
 
-    do_sysctl(&mut sysctl).map(|_| unsafe { sysctl.u.physinfo })
+    do_sysctl(&mut sysctl)?;
+    Ok(
+        // SAFETY: sysctl was successful, and we initialized the union ourselves.
+        unsafe { sysctl.u.physinfo },
+    )
 }
 
 pub fn xc_domain_getinfolist(
@@ -61,7 +64,6 @@ pub fn xc_domain_getinfolist(
 ) -> Result<Vec<XenDomctlGetDomainInfo>, std::io::Error> {
     let bouncebuffer =
         BounceBuffer::new(std::mem::size_of::<XenDomctlGetDomainInfo>() * max_domain as usize)?;
-    let vaddr = bouncebuffer.to_vaddr() as *mut XenDomctlGetDomainInfo;
 
     let mut sysctl = XenSysctl {
         cmd: XEN_SYSCTL_getdomaininfolist,
@@ -70,13 +72,18 @@ pub fn xc_domain_getinfolist(
             domaininfolist: XenSysctlGetdomaininfolist {
                 first_domain,
                 max_domain,
-                buffer: U64Aligned { v: vaddr as u64 },
+                buffer: U64Aligned {
+                    v: bouncebuffer.vaddr() as u64,
+                },
                 num_domains: 0,
             },
         },
     };
 
-    do_sysctl(&mut sysctl).map(|_| unsafe {
-        slice::from_raw_parts(vaddr, sysctl.u.domaininfolist.num_domains as usize).to_vec()
-    })
+    do_sysctl(&mut sysctl)?;
+    Ok(
+        // SAFETY: sysctl was successful, so bounce buffer must be populated with num_domains
+        // elements
+        unsafe { bouncebuffer.into_vec(sysctl.u.domaininfolist.num_domains as usize) },
+    )
 }

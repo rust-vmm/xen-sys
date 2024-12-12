@@ -10,8 +10,6 @@
 
 use std::convert::TryFrom;
 
-use libc::c_void;
-
 use crate::{
     domctl::{types::*, xc_types::XcDominfo},
     private::*,
@@ -19,27 +17,28 @@ use crate::{
 
 fn do_domctl(xen_domctl: &mut XenDomctl) -> Result<(), std::io::Error> {
     let bouncebuffer = BounceBuffer::new(std::mem::size_of::<XenDomctl>())?;
-    let vaddr = bouncebuffer.to_vaddr() as *mut XenDomctl;
-    let mut privcmd_hypercall = PrivCmdHypercall {
+    let vaddr = bouncebuffer.vaddr() as *mut XenDomctl;
+    let mut privcmd = PrivCmdHypercall {
         op: __HYPERVISOR_DOMCTL,
         arg: [vaddr as u64, 0, 0, 0, 0],
     };
-    /*
-     * The expression "&mut privcmd_hypercall as *mut _" creates a reference
-     * to privcmd_hypercall before casting it to a *mut c_void
-     */
-    let privcmd_ptr: *mut c_void = &mut privcmd_hypercall as *mut _ as *mut c_void;
+    // Write content of XenDomctl to the bounce buffer so that Xen knows what
+    // we are asking for.
+    // SAFETY: vaddr is a valid bounce buffer of XenDomctl size
+    unsafe { vaddr.write(*xen_domctl) };
 
+    // SAFETY: we pass a PrivCmdHypercall sized value to an IOCTL_PRIVCMD_HYPERCALL
+    // ioctl
     unsafe {
-        // Write content of XenDomctl to the bounce buffer so that Xen knows what
-        // we are asking for.
-        vaddr.write(*xen_domctl);
-
-        do_ioctl(IOCTL_PRIVCMD_HYPERCALL(), privcmd_ptr).map(|_| {
-            // Read back content from bounce buffer if no errors.
-            *xen_domctl = vaddr.read();
-        })
-    }
+        do_ioctl(
+            IOCTL_PRIVCMD_HYPERCALL(),
+            std::ptr::addr_of_mut!(privcmd).cast(),
+        )?
+    };
+    // Read back content from bounce buffer if no errors.
+    // SAFETY: vaddr is a valid bounce buffer of XenDomctl size
+    *xen_domctl = unsafe { vaddr.read() };
+    Ok(())
 }
 
 pub fn xc_domain_info(first_domain: u16, max_domain: u32) -> Vec<XcDominfo> {
@@ -59,7 +58,10 @@ pub fn xc_domain_info(first_domain: u16, max_domain: u32) -> Vec<XcDominfo> {
 
         match do_domctl(&mut domctl) {
             Ok(()) => {
-                if let Ok(dominfo) = XcDominfo::try_from(unsafe { domctl.u.domaininfo }) {
+                if let Ok(dominfo) = XcDominfo::try_from(
+                    // SAFETY: domctl was successful and the union is a XenDomctlPayload variant
+                    unsafe { domctl.u.domaininfo },
+                ) {
                     vec.push(dominfo);
                 }
             }

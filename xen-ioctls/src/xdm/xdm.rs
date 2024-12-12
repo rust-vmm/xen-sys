@@ -15,7 +15,6 @@ use std::{
     os::unix::io::AsRawFd,
 };
 
-use libc::{c_void, ioctl};
 use vmm_sys_util::eventfd::EventFd;
 use xen_bindings::bindings::ioreq;
 
@@ -25,47 +24,48 @@ use crate::aarch64::types::*;
 use crate::x86_64::types::*;
 use crate::{private::*, xdm::types::*};
 
-fn do_dm_op(
-    fd: &File,
-    domid: u16,
-    privcmd_dm_op_buffers: &mut Vec<PrivcmdDeviceModelOpBuffer>,
-) -> Result<(), std::io::Error> {
-    let mut privcmd_dm_op = PrivcmdDeviceModelOp::new(domid, privcmd_dm_op_buffers);
-    /*
-     * The expression "&mut privcmd_dm_op as *mut _" creates a reference
-     * to privcmd_dm_op before casting it to a *mut c_void
-     */
-    let privcmd_dm_op_ptr: *mut c_void = &mut privcmd_dm_op as *mut _ as *mut c_void;
-
-    unsafe {
-        let ret = ioctl(
-            fd.as_raw_fd(),
-            #[allow(clippy::useless_conversion)]
-            IOCTL_PRIVCMD_DM_OP().try_into().unwrap(),
-            privcmd_dm_op_ptr,
-        );
-        if ret < 0 {
-            return Err(Error::last_os_error());
-        }
-    }
-
-    Ok(())
-}
-
 pub struct XenDeviceModelHandle {
     fd: File,
 }
 
 impl XenDeviceModelHandle {
+    fn do_dm_op(
+        &self,
+        domid: u16,
+        privcmd_dm_op_buffers: &mut Vec<PrivcmdDeviceModelOpBuffer>,
+    ) -> Result<(), std::io::Error> {
+        let mut privcmd_dm_op = PrivcmdDeviceModelOp::new(domid, privcmd_dm_op_buffers);
+
+        // SAFETY: `self.fd` is a valid HYPERCALL_PRIVCMD descriptor and we pass a
+        // PrivcmdDeviceModelOp to a IOCTL_PRIVCMD_DM_OP ioctl
+        let ret = unsafe {
+            libc::ioctl(
+                self.fd.as_raw_fd(),
+                #[allow(clippy::useless_conversion)]
+                IOCTL_PRIVCMD_DM_OP().try_into().unwrap(),
+                std::ptr::addr_of_mut!(privcmd_dm_op),
+            )
+        };
+
+        if ret < 0 {
+            return Err(Error::last_os_error());
+        }
+
+        Ok(())
+    }
+
     pub fn new() -> Result<Self, std::io::Error> {
-        let fd = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .open(HYPERCALL_PRIVCMD)?;
+        let retval = Self {
+            fd: OpenOptions::new()
+                .read(true)
+                .write(true)
+                .open(HYPERCALL_PRIVCMD)?,
+        };
 
         let mut privcmd_dm_op_buffers = Vec::new();
 
-        do_dm_op(&fd, DOM_INVALID, &mut privcmd_dm_op_buffers).map(|_| XenDeviceModelHandle { fd })
+        retval.do_dm_op(DOM_INVALID, &mut privcmd_dm_op_buffers)?;
+        Ok(retval)
     }
 
     pub fn nr_vcpus(&self, domid: u16) -> Result<u32, std::io::Error> {
@@ -78,12 +78,15 @@ impl XenDeviceModelHandle {
         };
 
         let mut privcmd_dm_op_buffers = vec![PrivcmdDeviceModelOpBuffer {
-            uptr: &mut dm_op as *mut _ as *mut c_void,
+            uptr: std::ptr::addr_of_mut!(dm_op).cast(),
             size: std::mem::size_of::<XenDeviceModelOp>(),
         }];
 
-        do_dm_op(&self.fd, domid, &mut privcmd_dm_op_buffers)
-            .map(|_| unsafe { dm_op.u.xen_dm_op_nr_vcpus.vcpus })
+        self.do_dm_op(domid, &mut privcmd_dm_op_buffers)?;
+        Ok(
+            // SAFETY: we initialized the union ourselves
+            unsafe { dm_op.u.xen_dm_op_nr_vcpus.vcpus },
+        )
     }
 
     pub fn create_ioreq_server(
@@ -103,12 +106,15 @@ impl XenDeviceModelHandle {
         };
 
         let mut privcmd_dm_op_buffers = vec![PrivcmdDeviceModelOpBuffer {
-            uptr: &mut dm_op as *mut _ as *mut c_void,
+            uptr: std::ptr::addr_of_mut!(dm_op).cast(),
             size: std::mem::size_of::<XenDeviceModelOp>(),
         }];
 
-        do_dm_op(&self.fd, domid, &mut privcmd_dm_op_buffers)
-            .map(|_| unsafe { dm_op.u.xen_create_ioreq_server.id })
+        self.do_dm_op(domid, &mut privcmd_dm_op_buffers)?;
+        Ok(
+            // SAFETY: we initialized the union ourselves
+            unsafe { dm_op.u.xen_create_ioreq_server.id },
+        )
     }
 
     fn do_io_range_to_ioreq_server(
@@ -120,11 +126,6 @@ impl XenDeviceModelHandle {
         start: u64,
         end: u64,
     ) -> Result<(), std::io::Error> {
-        let r#type = match is_mmio {
-            0 => XEN_DMOP_IO_RANGE_PORT,
-            _ => XEN_DMOP_IO_RANGE_MEMORY,
-        };
-
         let mut dm_op = XenDeviceModelOp {
             op,
             pad: 0,
@@ -132,7 +133,10 @@ impl XenDeviceModelHandle {
                 xen_ioreq_server_range: XenDeviceModelIoreqServerRange {
                     id,
                     pad: 0,
-                    r#type,
+                    r#type: match is_mmio {
+                        0 => XEN_DMOP_IO_RANGE_PORT,
+                        _ => XEN_DMOP_IO_RANGE_MEMORY,
+                    },
                     start: U64Aligned { v: start },
                     end: U64Aligned { v: end },
                 },
@@ -140,11 +144,11 @@ impl XenDeviceModelHandle {
         };
 
         let mut privcmd_dm_op_buffers = vec![PrivcmdDeviceModelOpBuffer {
-            uptr: &mut dm_op as *mut _ as *mut c_void,
+            uptr: std::ptr::addr_of_mut!(dm_op).cast(),
             size: std::mem::size_of::<XenDeviceModelOp>(),
         }];
 
-        do_dm_op(&self.fd, domid, &mut privcmd_dm_op_buffers)
+        self.do_dm_op(domid, &mut privcmd_dm_op_buffers)
     }
 
     pub fn map_io_range_to_ioreq_server(
@@ -202,11 +206,11 @@ impl XenDeviceModelHandle {
         };
 
         let mut privcmd_dm_op_buffers = vec![PrivcmdDeviceModelOpBuffer {
-            uptr: &mut dm_op as *mut _ as *mut c_void,
+            uptr: std::ptr::addr_of_mut!(dm_op).cast(),
             size: std::mem::size_of::<XenDeviceModelOp>(),
         }];
 
-        do_dm_op(&self.fd, domid, &mut privcmd_dm_op_buffers)
+        self.do_dm_op(domid, &mut privcmd_dm_op_buffers)
     }
 
     pub fn destroy_ioreq_server(&self, domid: u16, id: u16) -> Result<(), std::io::Error> {
@@ -222,11 +226,11 @@ impl XenDeviceModelHandle {
         };
 
         let mut privcmd_dm_op_buffers = vec![PrivcmdDeviceModelOpBuffer {
-            uptr: &mut dm_op as *mut _ as *mut c_void,
+            uptr: std::ptr::addr_of_mut!(dm_op).cast(),
             size: std::mem::size_of::<XenDeviceModelOp>(),
         }];
 
-        do_dm_op(&self.fd, domid, &mut privcmd_dm_op_buffers)
+        self.do_dm_op(domid, &mut privcmd_dm_op_buffers)
     }
 
     pub fn set_irq_level(&self, domid: u16, irq: u32, level: u32) -> Result<(), std::io::Error> {
@@ -243,11 +247,11 @@ impl XenDeviceModelHandle {
         };
 
         let mut privcmd_dm_op_buffers = vec![PrivcmdDeviceModelOpBuffer {
-            uptr: &mut dm_op as *mut _ as *mut c_void,
+            uptr: std::ptr::addr_of_mut!(dm_op).cast(),
             size: std::mem::size_of::<XenDeviceModelOp>(),
         }];
 
-        do_dm_op(&self.fd, domid, &mut privcmd_dm_op_buffers)
+        self.do_dm_op(domid, &mut privcmd_dm_op_buffers)
     }
 
     fn config_irqfd(
@@ -271,7 +275,7 @@ impl XenDeviceModelHandle {
         };
 
         let mut irqfd = PrivcmdDeviceModelIrqFd {
-            dm_op: &mut dm_op as *mut _ as *mut c_void,
+            dm_op: std::ptr::addr_of_mut!(dm_op).cast(),
             size: std::mem::size_of::<XenDeviceModelOp>() as u32,
             fd: fd.as_raw_fd() as u32,
             flags,
@@ -279,14 +283,14 @@ impl XenDeviceModelHandle {
             pad: [0; 2],
         };
 
+        // SAFETY: self.fd is a valid HYPERCALL_PRIVCMD descriptor and we pass a
+        // PrivcmdDeviceModelIrqFd to a IOCTL_PRIVCMD_IRQFD ioctl
         let ret = unsafe {
-            // The expression "&mut irqfd as *mut _" creates a reference to irqfd before
-            // casting it to a *mut c_void.
-            ioctl(
+            libc::ioctl(
                 self.fd.as_raw_fd(),
                 #[allow(clippy::useless_conversion)]
                 IOCTL_PRIVCMD_IRQFD().try_into().unwrap(),
-                &mut irqfd as *mut _ as *mut c_void,
+                std::ptr::addr_of_mut!(irqfd),
             )
         };
 
@@ -330,8 +334,8 @@ impl XenDeviceModelHandle {
         flags: u32,
     ) -> Result<(), std::io::Error> {
         let mut ioeventfd = PrivcmdDeviceModelIoeventFd {
-            ioreq: ioreq as *mut _ as *mut c_void,
-            ports: ports as *const _ as *const u32,
+            ioreq: ioreq as *mut ioreq as *mut libc::c_void,
+            ports: ports.as_ptr(),
             addr,
             addr_len,
             event_fd: kick.as_raw_fd() as u32,
@@ -342,14 +346,14 @@ impl XenDeviceModelHandle {
             pad: [0; 2],
         };
 
+        // SAFETY: self.fd is a valid HYPERCALL_PRIVCMD descriptor and we pass a
+        // PrivcmdDeviceModelIoeventFd to a IOCTL_PRIVCMD_IOEVENTFD ioctl
         let ret = unsafe {
-            // The expression "&mut ioeventfd as *mut _" creates a reference to ioeventfd
-            // before casting it to a *mut c_void.
-            ioctl(
+            libc::ioctl(
                 self.fd.as_raw_fd(),
                 #[allow(clippy::useless_conversion)]
                 IOCTL_PRIVCMD_IOEVENTFD().try_into().unwrap(),
-                &mut ioeventfd as *mut _ as *mut c_void,
+                std::ptr::addr_of_mut!(ioeventfd),
             )
         };
 
