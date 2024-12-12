@@ -331,17 +331,16 @@ impl XenStoreHandle {
         }];
 
         match self.xs_transaction(XS_DIRECTORY, &mut iovec_buffers) {
-            Ok(mut res) => {
-                let mut vi32 = vec![];
-                let body = res.as_mut_str();
-                let vstr: Vec<&str> = body.split('\0').collect();
-                for str in vstr {
-                    if !str.eq("") {
-                        vi32.push(str.parse::<i32>().unwrap());
-                    }
-                }
-                Ok(vi32)
-            }
+            Ok(res) => Ok(res
+                .as_str()
+                .split('\0')
+                .filter(|v| !v.is_empty())
+                .map(|v| {
+                    v.parse::<i32>()
+                        .map_err(|err| format!("Could not parse `{:?}` as `i32`: {err}", v))
+                        .unwrap()
+                })
+                .collect()),
             Err(e) => Err(e),
         }
     }
