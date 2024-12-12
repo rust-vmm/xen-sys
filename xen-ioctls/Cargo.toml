@@ -12,6 +12,7 @@ edition = "2018"
 libc = ">=0.2.95"
 vmm-sys-util = ">=0.9.0"
 xen-bindings = { path = "../xen-bindings" }
+cfg-if = { version = "1.0.0" }
 
 [features]
 default = []
