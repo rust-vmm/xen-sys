@@ -69,20 +69,30 @@ macro_rules! hypercall {
     };
 }
 
-pub unsafe fn console_io(mode: ConsoleIO, buf: &[u8]) -> i64 {
+pub fn console_io(mode: ConsoleIO, buf: &[u8]) -> i64 {
     match mode {
-        ConsoleIO::Write => hypercall!(
-            __HYPERVISOR_console_io,
-            CONSOLEIO_write,
-            buf.len() as u64,
-            buf.as_ptr() as u64
-        ),
-        ConsoleIO::Read => hypercall!(
-            __HYPERVISOR_console_io,
-            CONSOLEIO_read,
-            buf.len() as u64,
-            buf.as_ptr() as u64
-        ),
+        ConsoleIO::Write => {
+            // SAFETY: `buf` is valid byte array.
+            unsafe {
+                hypercall!(
+                    __HYPERVISOR_console_io,
+                    CONSOLEIO_write,
+                    buf.len() as u64,
+                    buf.as_ptr() as u64
+                )
+            }
+        }
+        ConsoleIO::Read => {
+            // SAFETY: `buf` is valid byte array.
+            unsafe {
+                hypercall!(
+                    __HYPERVISOR_console_io,
+                    CONSOLEIO_read,
+                    buf.len() as u64,
+                    buf.as_ptr() as u64
+                )
+            }
+        }
     }
 }
 
