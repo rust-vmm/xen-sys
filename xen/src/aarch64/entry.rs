@@ -16,11 +16,12 @@ use core::arch::global_asm;
 
 use crate::hypercall;
 
-#[cfg(target_arch = "aarch64")]
+#[cfg(target_vendor = "xen")]
 #[lang = "eh_personality"]
 extern "C" fn eh_personality() {}
 
 global_asm!(include_str!("asm_macros.S"));
+#[cfg(target_vendor = "xen")]
 global_asm!(include_str!("head.S"));
 global_asm!(include_str!("cache.S"));
 global_asm!(include_str!("vector_table.S"));

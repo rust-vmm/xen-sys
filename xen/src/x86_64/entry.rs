@@ -10,7 +10,7 @@
 
 extern crate xen_sys;
 
-#[cfg(target = "x86_64-xen-pv")]
+#[cfg(target_vendor = "xen")]
 #[lang = "eh_personality"]
 extern "C" fn eh_personality() {}
 
