@@ -120,50 +120,56 @@ impl BounceBuffer {
             .write(true)
             .open(HYPERCALL_BUFFER_FILE)?;
 
-        unsafe {
-            // Setup a bounce buffer for Xen to use.
-            let vaddr = mmap(
+        // Setup a bounce buffer for Xen to use.
+        // SAFETY: `fd is a valid HYPERCALL_BUFFER_FILE descriptor
+        let vaddr = unsafe {
+            mmap(
                 core::ptr::null_mut::<c_void>(),
                 bounce_buffer_size,
                 PROT_READ | PROT_WRITE,
                 MAP_SHARED,
                 fd.as_raw_fd(),
                 0,
-            ) as *mut u8;
+            )
+        } as *mut u8;
 
-            // Function mmap() returns -1 in case of error.  Casting to i16 or i64
-            // yield the same result.
-            if vaddr as i8 == -1 {
-                return Err(Error::last_os_error());
-            }
-
-            // Zero-out the memory we got from Xen.  This will give us a clean slate and add
-            // the pages in the EL1 and EL2 page tables.  Otherwise the MMU
-            // throws and exception and Xen will abort the transfer.
-            vaddr.write_bytes(0, bounce_buffer_size);
-
-            Ok(BounceBuffer {
-                vaddr: vaddr as *mut c_void,
-                size: bounce_buffer_size,
-            })
+        // Function mmap() returns -1 in case of error.  Casting to i16 or i64
+        // yield the same result.
+        if vaddr as i8 == -1 {
+            return Err(Error::last_os_error());
         }
+
+        // Zero-out the memory we got from Xen.  This will give us a clean slate and add
+        // the pages in the EL1 and EL2 page tables.  Otherwise the MMU
+        // throws an exception and Xen will abort the transfer.
+        // SAFETY: vaddr was mmapped and we checked mmap return value for errors.
+        unsafe { vaddr.write_bytes(0, bounce_buffer_size) };
+
+        Ok(BounceBuffer {
+            vaddr: vaddr as *mut c_void,
+            size: bounce_buffer_size,
+        })
     }
 
-    pub(crate) fn to_vaddr(&self) -> *mut c_void {
+    pub(crate) fn vaddr(&self) -> *mut c_void {
         self.vaddr
+    }
+
+    pub(crate) unsafe fn into_vec<T: Clone>(self, len: usize) -> Vec<T> {
+        assert!(len * std::mem::size_of::<T>() < self.size);
+        core::slice::from_raw_parts::<T>(self.vaddr.cast(), len).to_vec()
     }
 }
 
 impl Drop for BounceBuffer {
     fn drop(&mut self) {
-        unsafe {
-            if munmap(self.vaddr, self.size) < 0 {
-                println!(
-                    "Error {} unmapping vaddr: {:?}",
-                    Error::last_os_error(),
-                    self.vaddr
-                );
-            }
+        // SAFETY: we allocated self.vaddr in Self::new
+        if unsafe { munmap(self.vaddr, self.size) } < 0 {
+            println!(
+                "Error {} unmapping vaddr: {:?}",
+                Error::last_os_error(),
+                self.vaddr
+            );
         }
     }
 }

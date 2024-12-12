@@ -15,8 +15,6 @@ use std::{
     os::unix::io::AsRawFd,
 };
 
-use libc::{c_void, ioctl};
-
 use crate::{private::*, xec::types::*};
 
 pub struct XenEventChannelHandle {
@@ -39,43 +37,36 @@ impl XenEventChannelHandle {
             remote_port,
         };
 
-        /*
-         * The expression "&mut bind as *mut _" creates a reference
-         * to bind before casting it to a *mut c_void
-         */
-        let bind_ptr: *mut c_void = &mut bind as *mut _ as *mut c_void;
-
-        unsafe {
-            match ioctl(
+        // SAFETY: self.fd is a valid HYPERCALL_EVTCHN descriptor, and we pass a
+        // XenIoctlEvtchnBindInterdomain to the IOCTL_EVTCHN_BIND_INTERDOMAIN ioctl
+        match unsafe {
+            libc::ioctl(
                 self.fd.as_raw_fd(),
                 #[allow(clippy::useless_conversion)]
                 IOCTL_EVTCHN_BIND_INTERDOMAIN().try_into().unwrap(),
-                bind_ptr,
-            ) {
-                ret if ret < 0 => Err(Error::last_os_error()),
-                ret => Ok(ret as u32),
-            }
+                std::ptr::addr_of_mut!(bind),
+            )
+        } {
+            ret if ret < 0 => Err(Error::last_os_error()),
+            ret => Ok(ret as u32),
         }
     }
 
     pub fn unbind(&self, port: u32) -> Result<u32, std::io::Error> {
         let mut unbind = XenIoctlEvtchnUnbind { port };
-        /*
-         * The expression "&mut unbind as *mut _" creates a reference
-         * to unbind before casting it to a *mut c_void
-         */
-        let unbind_ptr: *mut c_void = &mut unbind as *mut _ as *mut c_void;
 
-        unsafe {
-            match ioctl(
+        // SAFETY: self.fd is a valid HYPERCALL_EVTCHN descriptor, and we pass a
+        // XenIoctlEvtchnUnbind to the IOCTL_EVTCHN_UNBIND ioctl
+        match unsafe {
+            libc::ioctl(
                 self.fd.as_raw_fd(),
                 #[allow(clippy::useless_conversion)]
                 IOCTL_EVTCHN_UNBIND().try_into().unwrap(),
-                unbind_ptr,
-            ) {
-                ret if ret < 0 => Err(Error::last_os_error()),
-                ret => Ok(ret as u32),
-            }
+                std::ptr::addr_of_mut!(unbind),
+            )
+        } {
+            ret if ret < 0 => Err(Error::last_os_error()),
+            ret => Ok(ret as u32),
         }
     }
 
@@ -85,22 +76,19 @@ impl XenEventChannelHandle {
 
     pub fn notify(&self, port: u32) -> Result<u32, std::io::Error> {
         let mut notify = XenIoctlEvtchnNotify { port };
-        /*
-         * The expression "&mut notify as *mut _" creates a reference
-         * to notify before casting it to a *mut c_void
-         */
-        let notify_ptr: *mut c_void = &mut notify as *mut _ as *mut c_void;
 
-        unsafe {
-            match ioctl(
+        // SAFETY: self.fd is a valid HYPERCALL_EVTCHN descriptor, and we pass a
+        // XenIoctlEvtchnNotify to the IOCTL_EVTCHN_NOTIFY ioctl
+        match unsafe {
+            libc::ioctl(
                 self.fd.as_raw_fd(),
                 #[allow(clippy::useless_conversion)]
                 IOCTL_EVTCHN_NOTIFY().try_into().unwrap(),
-                notify_ptr,
-            ) {
-                ret if ret < 0 => Err(Error::last_os_error()),
-                ret => Ok(ret as u32),
-            }
+                std::ptr::addr_of_mut!(notify),
+            )
+        } {
+            ret if ret < 0 => Err(Error::last_os_error()),
+            ret => Ok(ret as u32),
         }
     }
 

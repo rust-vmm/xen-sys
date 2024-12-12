@@ -24,7 +24,6 @@ use crate::{
 };
 
 fn map_from_address(
-    addr: *mut c_void,
     size: usize,
     prot: i32,
     flags: i32,
@@ -35,20 +34,24 @@ fn map_from_address(
         .write(true)
         .open(HYPERCALL_PRIVCMD)?;
 
-    unsafe {
-        let vaddr = mmap(addr, size, prot, flags, fd.as_raw_fd(), offset).cast::<c_void>();
+    // SAFETY: `fd` is a valid file descriptor, mmap sets errno on error.
+    let vaddr = unsafe {
+        mmap(ptr::null_mut(), size, prot, flags, fd.as_raw_fd(), offset).cast::<c_void>()
+    };
 
-        // Function mmap() returns -1 in case of error.  Casting to i16 or i64
-        // yield the same result.
-        if vaddr as i8 == -1 {
-            return Err(Error::last_os_error());
-        }
-
-        Ok(vaddr)
+    // Function mmap() returns -1 in case of error.  Casting to i16 or i64
+    // yield the same result.
+    if vaddr as i8 == -1 {
+        return Err(Error::last_os_error());
     }
+
+    Ok(vaddr)
 }
 
-pub fn xenforeignmemory_map_resource(
+/// # Safety
+///
+/// `addr` placement hint must be a valid otherwise unused address.
+pub unsafe fn xenforeignmemory_map_resource(
     domid: u16,
     r#type: u32,
     id: u32,
@@ -66,11 +69,6 @@ pub fn xenforeignmemory_map_resource(
         num: nr_frames,
         addr: ptr::null_mut(),
     };
-    /*
-     * The expression "&mut privcmd_mmapresource as *mut _" creates a reference
-     * to privcmd_mmapresource before casting it to a *mut c_void
-     */
-    let privcmd_ptr: *mut c_void = &mut privcmd_mmapresource as *mut _ as *mut c_void;
 
     /* Check flags only contains POSIX defined values */
     if (flags & !(MAP_SHARED | MAP_PRIVATE)) != 0 {
@@ -79,7 +77,6 @@ pub fn xenforeignmemory_map_resource(
 
     if addr.is_null() && nr_frames != 0 {
         privcmd_mmapresource.addr = map_from_address(
-            addr,
             (nr_frames << PAGE_SHIFT) as usize,
             PROT_READ | PROT_WRITE,
             flags | MAP_SHARED,
@@ -87,51 +84,65 @@ pub fn xenforeignmemory_map_resource(
         )?;
     }
 
-    unsafe {
-        match do_ioctl(IOCTL_PRIVCMD_MMAP_RESOURCE(), privcmd_ptr) {
-            Ok(_) => Ok(XenForeignMemoryResourceHandle {
-                domid,
-                r#type,
-                id,
-                frame: frame as u64,
-                nr_frames: privcmd_mmapresource.num,
-                addr: privcmd_mmapresource.addr,
-                prot,
-                flags,
-            }),
-            Err(e) => {
-                if !addr.is_null()
-                    && munmap(
+    // SAFETY: `privcmd_mmapresource` points to a valid privcmd_mmapresource value
+    match unsafe {
+        do_ioctl(
+            IOCTL_PRIVCMD_MMAP_RESOURCE(),
+            std::ptr::addr_of_mut!(privcmd_mmapresource).cast(),
+        )
+    } {
+        Ok(_) => Ok(XenForeignMemoryResourceHandle {
+            domid,
+            r#type,
+            id,
+            frame: frame as u64,
+            nr_frames: privcmd_mmapresource.num,
+            addr: privcmd_mmapresource.addr,
+            prot,
+            flags,
+        }),
+        Err(e) => {
+            if !addr.is_null() {
+                // SAFETY: we set privcmd_mmapresource.addr to a mmap created value earlier.
+                let unmap_result = unsafe {
+                    munmap(
                         privcmd_mmapresource.addr,
                         (nr_frames << PAGE_SHIFT) as usize,
-                    ) < 0
-                {
+                    )
+                };
+
+                if unmap_result < 0 {
                     println!(
                         "Error {} unmapping vaddr: {:?}",
                         Error::last_os_error(),
                         privcmd_mmapresource.addr
                     );
                 }
-
-                Err(e)
             }
+
+            Err(e)
         }
     }
 }
 
-pub fn xenforeignmemory_unmap_resource(
+/// # Safety
+///
+/// `resource` must be a valid handle.
+pub unsafe fn xenforeignmemory_unmap_resource(
     resource: &XenForeignMemoryResourceHandle,
 ) -> Result<(), std::io::Error> {
-    unsafe {
-        if munmap(resource.addr, (resource.nr_frames << PAGE_SHIFT) as usize) < 0 {
-            Err(Error::last_os_error())
-        } else {
-            Ok(())
-        }
+    // SAFETY: caller ensures `resource.addr` is valid.
+    if unsafe { munmap(resource.addr, (resource.nr_frames << PAGE_SHIFT) as usize) } < 0 {
+        Err(Error::last_os_error())
+    } else {
+        Ok(())
     }
 }
 
-fn retry_paged_pages(
+/// # Safety
+///
+/// `arr` and `err` must be non-null and have the correct size
+unsafe fn retry_paged_pages(
     domid: u16,
     addr: *mut c_void,
     pages: u64,
@@ -141,66 +152,69 @@ fn retry_paged_pages(
     let mut i = 0;
     let mut batch_start = 0;
 
-    unsafe {
+    while i < pages {
+        /* Look for the first page that faulted */
         while i < pages {
-            /* Look for the first page that faulted */
-            while i < pages {
-                if *err.add(i as usize) == -ENOENT {
-                    batch_start = i;
-                    break;
-                }
-
-                i += 1;
+            // SAFETY: caller ensures `err` is valid
+            if unsafe { *err.add(i as usize) == -ENOENT } {
+                batch_start = i;
+                break;
             }
-
-            let mut privcmd_mmapbatch_v2 = PrivCmdMmapBatchV2 {
-                num: 1,
-                dom: domid,
-                addr: (addr as *mut u8).add((i << PAGE_SHIFT) as usize) as *mut c_void,
-                arr: arr.add(i as usize),
-                err: err.add(i as usize),
-            };
 
             i += 1;
-
-            /* Try to lump as many_ consecutive_ faulted  pages in the same request */
-            while i < pages {
-                if *err.add(i as usize) != -ENOENT {
-                    break;
-                }
-
-                i += 1;
-                privcmd_mmapbatch_v2.num += 1;
-            }
-
-            /*
-             * The expression "&mut privcmd_mmapbatch_v2 as *mut _" creates a reference
-             * to privcmd_mmapbatch_v2 before casting it to a *mut c_void
-             */
-            let privcmd_ptr: *mut c_void = &mut privcmd_mmapbatch_v2 as *mut _ as *mut c_void;
-
-            match do_ioctl(IOCTL_PRIVCMD_MMAPBATCH_V2(), privcmd_ptr) {
-                Ok(_) => {
-                    continue;
-                }
-                Err(e) => {
-                    if e.raw_os_error() == Some(libc::ENOENT) {
-                        /* Something went wrong with this batch, retry it */
-                        i = batch_start;
-                        thread::sleep(time::Duration::from_micros(100));
-                        continue;
-                    }
-
-                    return Err(e);
-                }
-            }
         }
 
-        Ok(())
+        let mut privcmd_mmapbatch_v2 = PrivCmdMmapBatchV2 {
+            num: 1,
+            dom: domid,
+            addr: (addr as *mut u8).add((i << PAGE_SHIFT) as usize) as *mut c_void,
+            // SAFETY: caller ensures `arr` is valid
+            arr: arr.add(i as usize),
+            // SAFETY: caller ensures `err` is valid
+            err: err.add(i as usize),
+        };
+
+        i += 1;
+
+        /* Try to lump as many_ consecutive_ faulted  pages in the same request */
+        while i < pages {
+            // SAFETY: caller ensures `err` is valid
+            if unsafe { *err.add(i as usize) != -ENOENT } {
+                break;
+            }
+
+            i += 1;
+            privcmd_mmapbatch_v2.num += 1;
+        }
+
+        // SAFETY: caller ensures `err` and
+        // `arr` pointers are valid
+        match unsafe {
+            do_ioctl(
+                IOCTL_PRIVCMD_MMAPBATCH_V2(),
+                std::ptr::addr_of_mut!(privcmd_mmapbatch_v2).cast(),
+            )
+        } {
+            Ok(_) => {
+                continue;
+            }
+            Err(err) if err.raw_os_error() == Some(libc::ENOENT) => {
+                // Something went wrong with this batch, retry it
+                i = batch_start;
+                thread::sleep(time::Duration::from_micros(100));
+                continue;
+            }
+            Err(err) => return Err(err),
+        }
     }
+
+    Ok(())
 }
 
-pub fn xenforeignmemory_map(
+/// # Safety
+///
+/// `arr` and `err` must be non-null and have the correct size
+pub unsafe fn xenforeignmemory_map(
     domid: u16,
     prot: i32,
     pages: u64,
@@ -211,13 +225,7 @@ pub fn xenforeignmemory_map(
     let mut err_array: *mut c_int = err;
     let num: u32 = pages.try_into().map_err(|_| ErrorKind::InvalidInput)?;
 
-    let addr: *mut c_void = map_from_address(
-        ptr::null_mut(),
-        (pages << PAGE_SHIFT) as usize,
-        prot,
-        MAP_SHARED,
-        0,
-    )?;
+    let addr: *mut c_void = map_from_address((pages << PAGE_SHIFT) as usize, prot, MAP_SHARED, 0)?;
 
     if err.is_null() {
         err_array = err_vec.as_mut_ptr();
@@ -230,33 +238,32 @@ pub fn xenforeignmemory_map(
         arr,
         err: err_array,
     };
-    /*
-     * The expression "&mut privcmd_mmapbatch_v2 as *mut _" creates a reference
-     * to privcmd_mmapbatch_v2 before casting it to a *mut c_void
-     */
-    let privcmd_ptr: *mut c_void = &mut privcmd_mmapbatch_v2 as *mut _ as *mut c_void;
 
-    unsafe {
-        match do_ioctl(IOCTL_PRIVCMD_MMAPBATCH_V2(), privcmd_ptr) {
-            Ok(_) => Ok(addr),
-            Err(e) => {
-                if e.raw_os_error() != Some(libc::ENOENT) {
-                    return Err(e);
-                }
-
-                retry_paged_pages(domid, addr, pages, arr, err_array).map(|_| addr)
+    // SAFETY: `privcmd_mmapbatch_v2` is a valid PrivCmdMmapBatchV2 struct
+    match unsafe {
+        do_ioctl(
+            IOCTL_PRIVCMD_MMAPBATCH_V2(),
+            std::ptr::addr_of_mut!(privcmd_mmapbatch_v2).cast(),
+        )
+    } {
+        Ok(_) => Ok(addr),
+        Err(e) => {
+            if e.raw_os_error() != Some(libc::ENOENT) {
+                return Err(e);
             }
+
+            // SAFETY: caller ensures `err` and `arr` are valid pointers
+            unsafe { retry_paged_pages(domid, addr, pages, arr, err_array).map(|_| addr) }
         }
     }
 }
 
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub fn xenforeignmemory_unmap(addr: *mut c_void, pages: u64) -> Result<(), std::io::Error> {
-    unsafe {
-        if munmap(addr, (pages << PAGE_SHIFT) as usize) < 0 {
-            Err(Error::last_os_error())
-        } else {
-            Ok(())
-        }
+    // SAFETY: if `addr` is invalid, munmap simply sets EINVAL
+    if unsafe { munmap(addr, (pages << PAGE_SHIFT) as usize) < 0 } {
+        Err(Error::last_os_error())
+    } else {
+        Ok(())
     }
 }
