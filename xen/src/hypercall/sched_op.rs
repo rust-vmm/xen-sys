@@ -14,6 +14,7 @@ use xen_sys::{
 };
 
 fn op_shutdown(reason: u32) {
+    // SAFETY: This call is safe.
     unsafe { sched_op(SchedOp::shutdown, reason) };
 }
 
@@ -32,7 +33,6 @@ pub fn crash() {
 }
 
 pub fn yield_slice() {
-    unsafe {
-        sched_op(SchedOp::r#yield, 0);
-    };
+    // SAFETY: This call is safe.
+    unsafe { sched_op(SchedOp::r#yield, 0) };
 }
