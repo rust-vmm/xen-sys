@@ -9,6 +9,7 @@
  */
 
 use std::{
+    convert::TryInto,
     fs::{File, OpenOptions},
     io::Error,
     os::unix::io::AsRawFd,
@@ -37,7 +38,12 @@ fn do_dm_op(
     let privcmd_dm_op_ptr: *mut c_void = &mut privcmd_dm_op as *mut _ as *mut c_void;
 
     unsafe {
-        let ret = ioctl(fd.as_raw_fd(), IOCTL_PRIVCMD_DM_OP(), privcmd_dm_op_ptr);
+        let ret = ioctl(
+            fd.as_raw_fd(),
+            #[allow(clippy::useless_conversion)]
+            IOCTL_PRIVCMD_DM_OP().try_into().unwrap(),
+            privcmd_dm_op_ptr,
+        );
         if ret < 0 {
             return Err(Error::last_os_error());
         }
@@ -278,7 +284,8 @@ impl XenDeviceModelHandle {
             // casting it to a *mut c_void.
             ioctl(
                 self.fd.as_raw_fd(),
-                IOCTL_PRIVCMD_IRQFD(),
+                #[allow(clippy::useless_conversion)]
+                IOCTL_PRIVCMD_IRQFD().try_into().unwrap(),
                 &mut irqfd as *mut _ as *mut c_void,
             )
         };
@@ -340,7 +347,8 @@ impl XenDeviceModelHandle {
             // before casting it to a *mut c_void.
             ioctl(
                 self.fd.as_raw_fd(),
-                IOCTL_PRIVCMD_IOEVENTFD(),
+                #[allow(clippy::useless_conversion)]
+                IOCTL_PRIVCMD_IOEVENTFD().try_into().unwrap(),
                 &mut ioeventfd as *mut _ as *mut c_void,
             )
         };

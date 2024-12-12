@@ -8,7 +8,7 @@
  * except according to those terms.
  */
 
-use std::{fs::OpenOptions, io::Error, os::unix::io::AsRawFd};
+use std::{convert::TryInto, fs::OpenOptions, io::Error, os::unix::io::AsRawFd};
 
 use libc::{c_ulong, c_void, ioctl, mmap, munmap, MAP_SHARED, PROT_READ, PROT_WRITE};
 use vmm_sys_util::ioctl::{_IOC_NONE, _IOC_WRITE};
@@ -184,7 +184,12 @@ pub(crate) unsafe fn do_ioctl(request: c_ulong, data: *mut c_void) -> Result<(),
         .write(true)
         .open(HYPERCALL_PRIVCMD)?;
 
-    let ret = ioctl(fd.as_raw_fd(), request, data);
+    let ret = ioctl(
+        fd.as_raw_fd(),
+        #[allow(clippy::useless_conversion)]
+        request.try_into().unwrap(),
+        data,
+    );
 
     if ret == 0 {
         return Ok(());
