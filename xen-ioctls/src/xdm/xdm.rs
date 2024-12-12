@@ -8,21 +8,21 @@
  * except according to those terms.
  */
 
-use crate::private::*;
-use crate::xdm::types::*;
+use std::{
+    fs::{File, OpenOptions},
+    io::Error,
+    os::unix::io::AsRawFd,
+};
+
 use libc::{c_void, ioctl};
-use std::fs::{File, OpenOptions};
-use std::io::Error;
-use std::os::unix::io::AsRawFd;
-
 use vmm_sys_util::eventfd::EventFd;
-
 use xen_bindings::bindings::ioreq;
 
 #[cfg(target_arch = "aarch64")]
 use crate::aarch64::types::*;
 #[cfg(target_arch = "x86_64")]
 use crate::x86_64::types::*;
+use crate::{private::*, xdm::types::*};
 
 fn do_dm_op(
     fd: &File,
@@ -274,8 +274,8 @@ impl XenDeviceModelHandle {
         };
 
         let ret = unsafe {
-            // The expression "&mut irqfd as *mut _" creates a reference to irqfd before casting it
-            // to a *mut c_void.
+            // The expression "&mut irqfd as *mut _" creates a reference to irqfd before
+            // casting it to a *mut c_void.
             ioctl(
                 self.fd.as_raw_fd(),
                 IOCTL_PRIVCMD_IRQFD(),
@@ -336,8 +336,8 @@ impl XenDeviceModelHandle {
         };
 
         let ret = unsafe {
-            // The expression "&mut ioeventfd as *mut _" creates a reference to ioeventfd before casting it
-            // to a *mut c_void.
+            // The expression "&mut ioeventfd as *mut _" creates a reference to ioeventfd
+            // before casting it to a *mut c_void.
             ioctl(
                 self.fd.as_raw_fd(),
                 IOCTL_PRIVCMD_IOEVENTFD(),

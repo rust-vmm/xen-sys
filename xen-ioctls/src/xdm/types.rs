@@ -11,8 +11,9 @@
 #![allow(dead_code)]
 #![allow(non_upper_case_globals)]
 
-use libc::c_void;
 use std::ptr;
+
+use libc::c_void;
 
 #[cfg(target_arch = "aarch64")]
 use crate::aarch64::types::*;

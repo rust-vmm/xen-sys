@@ -8,17 +8,20 @@
  * except according to those terms.
  */
 
-use libc::{c_int, c_void, mmap, munmap, ENOENT, MAP_PRIVATE, MAP_SHARED, PROT_READ, PROT_WRITE};
-use std::convert::TryInto;
-use std::fs::OpenOptions;
-use std::io::{Error, ErrorKind};
-use std::os::unix::io::AsRawFd;
-use std::ptr;
-use std::{thread, time};
+use std::{
+    convert::TryInto,
+    fs::OpenOptions,
+    io::{Error, ErrorKind},
+    os::unix::io::AsRawFd,
+    ptr, thread, time,
+};
 
-use crate::private::*;
-use crate::xfm::types::*;
-use crate::xfm::xfm_types::*;
+use libc::{c_int, c_void, mmap, munmap, ENOENT, MAP_PRIVATE, MAP_SHARED, PROT_READ, PROT_WRITE};
+
+use crate::{
+    private::*,
+    xfm::{types::*, xfm_types::*},
+};
 
 fn map_from_address(
     addr: *mut c_void,

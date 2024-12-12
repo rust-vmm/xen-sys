@@ -46,6 +46,5 @@ pub struct XenArchDomainconfig {
     //
     // = 0 => property not present
     // > 0 => Value of the property
-    //
     pub clock_frequency: u32,
 }

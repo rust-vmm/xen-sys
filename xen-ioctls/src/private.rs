@@ -8,16 +8,15 @@
  * except according to those terms.
  */
 
+use std::{fs::OpenOptions, io::Error, os::unix::io::AsRawFd};
+
 use libc::{c_ulong, c_void, ioctl, mmap, munmap, MAP_SHARED, PROT_READ, PROT_WRITE};
-use std::fs::OpenOptions;
-use std::io::Error;
-use std::os::unix::io::AsRawFd;
 use vmm_sys_util::ioctl::{_IOC_NONE, _IOC_WRITE};
 
-use crate::xdm::types::{
-    PrivcmdDeviceModelIoeventFd, PrivcmdDeviceModelIrqFd, PrivcmdDeviceModelOp,
+use crate::{
+    xdm::types::{PrivcmdDeviceModelIoeventFd, PrivcmdDeviceModelIrqFd, PrivcmdDeviceModelOp},
+    xfm::types::{PrivCmdMmapBatchV2, PrivCmdMmapResource},
 };
-use crate::xfm::types::{PrivCmdMmapBatchV2, PrivCmdMmapResource};
 
 pub const PAGE_SHIFT: u32 = 12;
 pub const PAGE_SIZE: u32 = 1 << PAGE_SHIFT;
@@ -138,9 +137,9 @@ impl BounceBuffer {
                 return Err(Error::last_os_error());
             }
 
-            // Zero-out the memory we got from Xen.  This will give us a clean slate and add the pages
-            // in the EL1 and EL2 page tables.  Otherwise the MMU throws and exception and Xen will
-            // abort the transfer.
+            // Zero-out the memory we got from Xen.  This will give us a clean slate and add
+            // the pages in the EL1 and EL2 page tables.  Otherwise the MMU
+            // throws and exception and Xen will abort the transfer.
             vaddr.write_bytes(0, bounce_buffer_size);
 
             Ok(BounceBuffer {

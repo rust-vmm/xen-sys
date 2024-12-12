@@ -8,12 +8,15 @@
  * except according to those terms.
  */
 
-use crate::private::*;
-use crate::xec::types::*;
+use std::{
+    fs::{File, OpenOptions},
+    io::{Error, Read, Write},
+    os::unix::io::AsRawFd,
+};
+
 use libc::{c_void, ioctl};
-use std::fs::{File, OpenOptions};
-use std::io::{Error, Read, Write};
-use std::os::unix::io::AsRawFd;
+
+use crate::{private::*, xec::types::*};
 
 pub struct XenEventChannelHandle {
     fd: File,

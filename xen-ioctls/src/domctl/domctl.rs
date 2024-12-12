@@ -12,9 +12,10 @@ use std::convert::TryFrom;
 
 use libc::c_void;
 
-use crate::domctl::types::*;
-use crate::domctl::xc_types::XcDominfo;
-use crate::private::*;
+use crate::{
+    domctl::{types::*, xc_types::XcDominfo},
+    private::*,
+};
 
 fn do_domctl(xen_domctl: &mut XenDomctl) -> Result<(), std::io::Error> {
     let bouncebuffer = BounceBuffer::new(std::mem::size_of::<XenDomctl>())?;
@@ -63,7 +64,11 @@ pub fn xc_domain_info(first_domain: u16, max_domain: u32) -> Vec<XcDominfo> {
                 }
             }
             Err(err) if err.raw_os_error() == Some(libc::EACCES) => {
-                eprintln!("Xen DOMCTL failed: {}\nCheck if XEN_DOMCTL_INTERFACE_VERSION in your Xen build matches the expected value of this xen-ioctls build: {:#04x}", err, XEN_DOMCTL_INTERFACE_VERSION);
+                eprintln!(
+                    "Xen DOMCTL failed: {}\nCheck if XEN_DOMCTL_INTERFACE_VERSION in your Xen \
+                     build matches the expected value of this xen-ioctls build: {:#04x}",
+                    err, XEN_DOMCTL_INTERFACE_VERSION
+                );
             }
             Err(err) => {
                 eprintln!("Xen DOMCTL failed: {}", err);
