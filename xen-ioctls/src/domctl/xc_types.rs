@@ -17,9 +17,7 @@ use std::convert::TryFrom;
 use crate::aarch64::types::*;
 #[cfg(target_arch = "x86_64")]
 use crate::x86_64::types::*;
-
-use crate::domctl::types::*;
-use crate::private::PAGE_SHIFT;
+use crate::{domctl::types::*, private::PAGE_SHIFT};
 
 #[derive(Debug, Default, Copy, Clone)]
 // tools/include/xenctrl.h::xc_dominfo

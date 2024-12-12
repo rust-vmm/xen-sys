@@ -8,8 +8,9 @@
  * except according to those terms.
  */
 
-use nix::libc::{iovec, E2BIG};
 use std::io;
+
+use nix::libc::{iovec, E2BIG};
 
 pub const XENSTORED_SOCKET: &str = "/var/run/xenstored/socket";
 pub const XENSTORE_PAYLOAD_MAX: u32 = 4096;

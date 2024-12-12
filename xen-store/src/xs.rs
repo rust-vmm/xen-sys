@@ -10,24 +10,25 @@
 
 #![allow(clippy::type_complexity)]
 
+use std::{
+    collections::VecDeque,
+    ffi::CString,
+    io::{Error, ErrorKind, Read, Write},
+    mem,
+    net::Shutdown,
+    os::unix::{io::AsRawFd, net::UnixStream},
+    slice,
+    sync::{Arc, Condvar, Mutex},
+    thread,
+    thread::JoinHandle,
+};
+
 use libc::writev;
 use nix::libc::iovec;
-use std::collections::VecDeque;
-use std::ffi::CString;
-use std::io::{Error, ErrorKind};
-use std::io::{Read, Write};
-use std::mem;
-use std::net::Shutdown;
-use std::os::unix::io::AsRawFd;
-use std::os::unix::net::UnixStream;
-use std::slice;
-use std::sync::{Arc, Condvar, Mutex};
-use std::thread;
-use std::thread::JoinHandle;
 use vmm_sys_util::eventfd::{EventFd, EFD_SEMAPHORE};
+use xen_bindings::bindings::xs_watch_type;
 
 use crate::types::*;
-use xen_bindings::bindings::xs_watch_type;
 
 pub const XS_DIRECTORY: u32 = 1;
 pub const XS_READ: u32 = 2;

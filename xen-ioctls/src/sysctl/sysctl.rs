@@ -16,10 +16,7 @@ use libc::c_void;
 use crate::aarch64::types::*;
 #[cfg(target_arch = "x86_64")]
 use crate::x86_64::types::*;
-
-use crate::domctl::types::*;
-use crate::private::*;
-use crate::sysctl::types::*;
+use crate::{domctl::types::*, private::*, sysctl::types::*};
 
 fn do_sysctl(xen_sysctl: &mut XenSysctl) -> Result<(), std::io::Error> {
     let bouncebuffer = BounceBuffer::new(std::mem::size_of::<XenSysctl>())?;
